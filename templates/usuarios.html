@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Usuarios - Controle de Vendas{% endblock %}
+{% block page_title %}Usuarios{% endblock %}
+{% block content %}
+{% if error %}
+<div class="alert alert-error">{{ error }}</div>
+{% endif %}
+
+<form method="post" action="/usuarios" class="card" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Nome</span>
+    <input type="text" name="name" required />
+  </label>
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Email</span>
+    <input type="email" name="email" required />
+  </label>
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Senha</span>
+    <input type="password" name="password" required minlength="6" />
+  </label>
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Perfil</span>
+    <select name="role">
+      <option value="VIEWER">Visualizador</option>
+      <option value="ADMIN">Administrador</option>
+    </select>
+  </label>
+  <button type="submit">Adicionar</button>
+</form>
+
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Nome</th>
+        <th>Email</th>
+        <th>Perfil</th>
+        <th>Status</th>
+        <th>Acoes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for user in users %}
+      <tr>
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td><span class="badge {{ 'badge-admin' if user.role == 'ADMIN' else 'badge-viewer' }}">{{ user.role }}</span></td>
+        <td>{{ 'Ativo' if user.is_active else 'Inativo' }}</td>
+        <td style="display:flex; gap:8px;">
+          <form method="post" action="/usuarios/{{ user.id }}/toggle-ativo">
+            <input type="hidden" name="is_active" value="{{ 'false' if user.is_active else 'true' }}" />
+            <button type="submit" class="secondary">{{ 'Desativar' if user.is_active else 'Ativar' }}</button>
+          </form>
+          {% if user.id != current_user.sub|int %}
+          <form method="post" action="/usuarios/{{ user.id }}/excluir" onsubmit="return confirm('Remover este usuario?');">
+            <button type="submit" class="secondary">Excluir</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

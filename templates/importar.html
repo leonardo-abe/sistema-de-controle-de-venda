@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Importar - Controle de Vendas{% endblock %}
+{% block page_title %}Importar{% endblock %}
+{% block content %}
+<p style="color: var(--text-secondary); max-width: 640px; margin-top: 0;">
+  Selecione os 3 arquivos exportados para a mesma data, seguindo o padrao de nome
+  <code>vendas_DDMMAAAA.csv</code>, <code>vendas_DDMMAAAA_pagamentos.csv</code> e
+  <code>vendas_DDMMAAAA_produtos.csv</code>. Os tres precisam ter a mesma data no nome.
+</p>
+
+{% if erro %}
+<div class="alert alert-error">{{ erro }}</div>
+{% endif %}
+{% if resultado %}
+<div class="alert alert-success">
+  Importacao concluida para {{ resultado.data_referencia }}:
+  {{ resultado.total_pedidos }} pedidos, {{ resultado.total_pagamentos }} pagamentos, {{ resultado.total_itens }} itens.
+  {% if resultado.substituiu_batch_anterior %}(dados anteriores desta data foram substituidos){% endif %}
+</div>
+{% endif %}
+
+<form method="post" action="/importar" enctype="multipart/form-data" class="card" style="margin-bottom: 24px; display: flex; flex-direction: column; gap: 14px; max-width: 520px;">
+  <label>
+    <span style="font-size: 12px; color: var(--text-muted);">Arquivo de pedidos (vendas_DDMMAAAA.csv)</span>
+    <input type="file" name="arquivo_pedidos" accept=".csv" required />
+  </label>
+  <label>
+    <span style="font-size: 12px; color: var(--text-muted);">Arquivo de pagamentos (vendas_DDMMAAAA_pagamentos.csv)</span>
+    <input type="file" name="arquivo_pagamentos" accept=".csv" required />
+  </label>
+  <label>
+    <span style="font-size: 12px; color: var(--text-muted);">Arquivo de produtos (vendas_DDMMAAAA_produtos.csv)</span>
+    <input type="file" name="arquivo_produtos" accept=".csv" required />
+  </label>
+  <button type="submit">Importar</button>
+</form>
+
+<h3 style="color: var(--brand-navy);">Historico de importacoes</h3>
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Data referencia</th>
+        <th>Pedidos</th>
+        <th>Pagamentos</th>
+        <th>Itens</th>
+        <th>Importado em</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for batch in batches %}
+      <tr>
+        <td>{{ batch.data_referencia }}</td>
+        <td>{{ batch.total_pedidos }}</td>
+        <td>{{ batch.total_pagamentos }}</td>
+        <td>{{ batch.total_itens }}</td>
+        <td>{{ batch.importado_em }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

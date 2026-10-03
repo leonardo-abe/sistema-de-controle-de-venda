@@ -1,0 +1,187 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Controle de Vendas{% endblock %}
+{% block page_title %}Dashboard{% endblock %}
+{% block head %}
+<script src="/static/js/vendor/chart.umd.min.js"></script>
+{% endblock %}
+{% block content %}
+<form class="filters" id="filtros-form">
+  <label>
+    Data inicio
+    <input type="date" name="data_inicio" />
+  </label>
+  <label>
+    Data fim
+    <input type="date" name="data_fim" />
+  </label>
+  <label>
+    Vendedor
+    <select name="vendedor" id="filtro-vendedor">
+      <option value="">Todos</option>
+    </select>
+  </label>
+  <label>
+    Forma de pagamento
+    <select name="forma_pagamento" id="filtro-pagamento">
+      <option value="">Todas</option>
+    </select>
+  </label>
+  <button type="submit">Aplicar filtro</button>
+  <button type="button" class="secondary" id="btn-limpar">Limpar</button>
+</form>
+
+<div class="grid grid-kpis" style="margin-bottom: 24px;">
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Pedidos</span>
+      <span class="kpi-icon" style="background: var(--series-1);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-pedidos">-</div>
+    <div class="kpi-trend" id="kpi-pedidos-trend"></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Valor liquido</span>
+      <span class="kpi-icon" style="background: var(--series-2);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-valor">-</div>
+    <div class="kpi-trend" id="kpi-valor-trend"></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Ticket medio</span>
+      <span class="kpi-icon" style="background: var(--series-5);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-ticket">-</div>
+    <div class="kpi-trend" id="kpi-ticket-trend"></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Desconto concedido</span>
+      <span class="kpi-icon" style="background: var(--series-4);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41L13.42 20.58a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-desconto">-</div>
+    <div class="kpi-trend" id="kpi-desconto-trend"></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Itens vendidos</span>
+      <span class="kpi-icon" style="background: var(--series-3);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-itens">-</div>
+    <div class="kpi-trend" id="kpi-itens-trend"></div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Margem bruta</span>
+      <span class="kpi-icon" style="background: var(--series-6);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-margem">-</div>
+    <div class="kpi-trend" id="kpi-margem-trend"></div>
+  </div>
+</div>
+
+<div class="grid grid-charts">
+  <div class="card">
+    <p class="chart-title">Vendas por dia</p>
+    <div class="chart-wrap"><canvas id="chart-vendas-dia"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Formas de pagamento</p>
+    <div class="chart-wrap"><canvas id="chart-pagamento"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Ranking de vendedores</p>
+    <div class="chart-wrap"><canvas id="chart-vendedor"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Top produtos (R$)</p>
+    <div class="chart-wrap"><canvas id="chart-produtos"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Vendas por grupo</p>
+    <div class="chart-wrap"><canvas id="chart-grupos"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Margem bruta por grupo</p>
+    <div class="chart-wrap"><canvas id="chart-margem"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Pedidos por cidade</p>
+    <div class="chart-wrap"><canvas id="chart-cidade"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Cliente identificado</p>
+    <div class="chart-wrap"><canvas id="chart-cliente"></canvas></div>
+  </div>
+</div>
+
+<h3 style="color: var(--brand-navy); margin-top: 32px;">Auditoria de descontos</h3>
+<p style="color: var(--text-secondary); max-width: 640px; margin-top: -8px;">
+  Pedidos marcados como "Recuperado" (reabertos/editados pelo vendedor) ou com desconto igual ou acima de 50%,
+  mesmo sem a marcacao. Use para investigar cupons zerados ou descontos fora do padrao.
+</p>
+
+<div class="grid grid-kpis" style="margin-bottom: 16px;">
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Pedidos sinalizados</span>
+      <span class="kpi-icon" style="background: var(--critical);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-auditoria-total">-</div>
+  </div>
+  <div class="card kpi-card">
+    <div class="kpi-top">
+      <span class="kpi-label">Valor descontado nesses pedidos</span>
+      <span class="kpi-icon" style="background: var(--critical);">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+      </span>
+    </div>
+    <div class="kpi-value" id="kpi-auditoria-valor">-</div>
+  </div>
+</div>
+
+<div class="grid grid-charts" style="margin-bottom: 16px;">
+  <div class="card">
+    <p class="chart-title">Pedidos sinalizados por vendedor</p>
+    <div class="chart-wrap"><canvas id="chart-auditoria-vendedor"></canvas></div>
+  </div>
+</div>
+
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Pedido</th>
+        <th>Data</th>
+        <th>Vendedor</th>
+        <th>Cliente</th>
+        <th>Total</th>
+        <th>% Desconto</th>
+        <th>Valor desconto</th>
+        <th>Valor liquido</th>
+        <th>Situacao</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-auditoria">
+      <tr><td colspan="9" style="color: var(--text-muted);">Nenhum pedido sinalizado neste periodo.</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<script src="/static/js/dashboard.js"></script>
+{% endblock %}
