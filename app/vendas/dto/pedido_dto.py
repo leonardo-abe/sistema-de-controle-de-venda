@@ -36,6 +36,7 @@ class ItemPedidoDetalheSchema(BaseModel):
     valor_total: float
     custo: float
     margem: float
+    margem_percentual: float
 
 
 class PagamentoPedidoDetalheSchema(BaseModel):

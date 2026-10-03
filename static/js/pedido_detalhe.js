@@ -45,8 +45,9 @@
       return '<p style="color: var(--text-muted);">Nenhum item neste pedido.</p>';
     }
     const linhas = itens
-      .map(
-        (i) => `
+      .map((i) => {
+        const corMargem = i.margem < 0 ? "var(--critical)" : "var(--good)";
+        return `
       <tr>
         <td data-label="Cod.">${i.cod_prod}</td>
         <td data-label="Produto">${escapeHtml(i.produto)}</td>
@@ -55,9 +56,10 @@
         <td data-label="Valor unit.">${moeda(i.valor_unitario)}</td>
         <td data-label="Valor total">${moeda(i.valor_total)}</td>
         <td data-label="Custo">${moeda(i.custo)}</td>
-        <td data-label="Margem">${moeda(i.margem)}</td>
-      </tr>`
-      )
+        <td data-label="Margem" style="color: ${corMargem}; font-weight: 600;">${moeda(i.margem)}</td>
+        <td data-label="Margem %" style="color: ${corMargem}; font-weight: 600;">${percentual(i.margem_percentual)}</td>
+      </tr>`;
+      })
       .join("");
     return `
     <div class="card table-scroll" style="margin-bottom: 16px;">
@@ -65,7 +67,7 @@
       <table>
         <thead>
           <tr>
-            <th>Cod.</th><th>Produto</th><th>Grupo</th><th>Qtd.</th><th>Valor unit.</th><th>Valor total</th><th>Custo</th><th>Margem</th>
+            <th>Cod.</th><th>Produto</th><th>Grupo</th><th>Qtd.</th><th>Valor unit.</th><th>Valor total</th><th>Custo</th><th>Margem</th><th>Margem %</th>
           </tr>
         </thead>
         <tbody>${linhas}</tbody>

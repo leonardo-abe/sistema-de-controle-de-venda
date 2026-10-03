@@ -27,9 +27,19 @@
 
   const charts = {};
 
+  const TRUNCATE_LEN = 22;
+  function truncar(texto) {
+    if (!texto || texto.length <= TRUNCATE_LEN) return texto;
+    return texto.slice(0, TRUNCATE_LEN - 1).trimEnd() + "…";
+  }
+
   function renderBar(id, labels, data, { horizontal = false, colorIndex = 0 } = {}) {
     const ctx = document.getElementById(id).getContext("2d");
     if (charts[id]) charts[id].destroy();
+
+    const eixoCategoria = horizontal ? "y" : "x";
+    const eixoValor = horizontal ? "x" : "y";
+
     charts[id] = new Chart(ctx, {
       type: "bar",
       data: {
@@ -47,10 +57,20 @@
         indexAxis: horizontal ? "y" : "x",
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { title: (items) => labels[items[0].dataIndex] } },
+        },
         scales: {
-          x: { grid: { display: horizontal } },
-          y: { grid: { display: !horizontal } },
+          [eixoCategoria]: {
+            grid: { display: !horizontal },
+            ticks: {
+              callback: function (value) {
+                return truncar(this.getLabelForValue(value));
+              },
+            },
+          },
+          [eixoValor]: { grid: { display: horizontal } },
         },
       },
     });

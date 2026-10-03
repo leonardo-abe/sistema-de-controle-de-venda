@@ -105,6 +105,7 @@ class ServicePedidos:
                 valor_total=item.valor_total,
                 custo=item.custo,
                 margem=round(item.valor_total - item.custo, 2),
+                margem_percentual=round((item.valor_total - item.custo) / item.valor_total * 100, 2) if item.valor_total else 0.0,
             )
             for item, produto in self.session.execute(itens_stmt).all()
         ]
