@@ -29,7 +29,6 @@
   --critical: #d03b3b;
 
   --sidebar-width: 240px;
-  --sidebar-width-collapsed: 72px;
   --topbar-height: 60px;
   --radius: 12px;
 }
@@ -41,6 +40,8 @@
 html,
 body {
   height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -49,6 +50,11 @@ body {
   background: var(--page-plane);
   color: var(--text-primary);
   -webkit-font-smoothing: antialiased;
+}
+
+input,
+select {
+  max-width: 100%;
 }
 
 a {
@@ -69,9 +75,31 @@ a {
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  position: sticky;
+  position: fixed;
+  left: 0;
   top: 0;
   height: 100vh;
+  z-index: 30;
+  transform: translateX(-100%);
+  transition: transform 0.2s ease;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0);
+}
+
+.app-shell.sidebar-open .sidebar {
+  transform: translateX(0);
+  box-shadow: 8px 0 24px rgba(11, 31, 63, 0.15);
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(11, 31, 63, 0.4);
+  z-index: 20;
+}
+
+.app-shell.sidebar-open .sidebar-backdrop {
+  display: block;
 }
 
 .sidebar::before {
@@ -89,20 +117,6 @@ a {
   align-items: center;
   gap: 10px;
   padding: 20px 18px 16px;
-}
-
-.logo-badge {
-  width: 36px;
-  height: 36px;
-  min-width: 36px;
-  border-radius: 10px;
-  background: var(--brand-red);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
 }
 
 .logo-text {
@@ -203,10 +217,6 @@ a {
   background: var(--surface-2);
 }
 
-.sidebar-backdrop {
-  display: none;
-}
-
 .app-main {
   flex: 1;
   min-width: 0;
@@ -235,29 +245,61 @@ a {
 }
 
 .icon-btn {
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: 8px;
   border: 1px solid var(--border);
-  background: var(--surface-1);
-  color: var(--text-secondary);
+  background: var(--surface-2);
+  color: var(--brand-navy);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .icon-btn svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .icon-btn:hover {
-  background: var(--surface-2);
+  background: var(--border);
 }
 
 .mobile-only {
   display: none;
+}
+
+.desktop-only {
+  display: flex;
+}
+
+.menu-toggle-btn {
+  width: auto;
+  height: 38px;
+  padding: 0 12px 0 10px;
+  gap: 6px;
+  background: rgba(226, 0, 26, 0.08);
+  border-color: rgba(226, 0, 26, 0.3);
+  color: var(--brand-red);
+}
+
+.menu-toggle-btn:hover {
+  background: rgba(226, 0, 26, 0.14);
+}
+
+.menu-toggle-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.menu-toggle-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.app-shell.sidebar-open .menu-toggle-btn svg {
+  transform: rotate(180deg);
 }
 
 .content {
@@ -470,6 +512,36 @@ th {
   overflow-x: auto;
 }
 
+.table-link {
+  color: var(--brand-red);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 4px 2px;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.pagination-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.badge-flag {
+  background: rgba(208, 59, 59, 0.12);
+  color: var(--critical);
+}
+
 /* ---------- Alerts / badges ---------- */
 
 .alert {
@@ -520,10 +592,6 @@ th {
   text-align: center;
 }
 
-.login-card .logo-badge {
-  margin: 0 auto 4px;
-}
-
 .login-card h2 {
   margin: 0;
   color: var(--brand-navy);
@@ -542,35 +610,12 @@ th {
 /* ---------- Responsive ---------- */
 
 @media (max-width: 860px) {
-  .sidebar {
-    position: fixed;
-    left: 0;
-    top: 0;
-    z-index: 30;
-    transform: translateX(-100%);
-    transition: transform 0.2s ease;
-    box-shadow: 0 0 0 rgba(0, 0, 0, 0);
-  }
-
-  .app-shell.sidebar-open .sidebar {
-    transform: translateX(0);
-    box-shadow: 8px 0 24px rgba(11, 31, 63, 0.15);
-  }
-
-  .sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(11, 31, 63, 0.4);
-    z-index: 20;
-  }
-
-  .app-shell.sidebar-open .sidebar-backdrop {
-    display: block;
-  }
-
   .mobile-only {
     display: flex;
+  }
+
+  .desktop-only {
+    display: none;
   }
 
   .content {
@@ -592,6 +637,69 @@ th {
 
   .grid-kpis {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ---------- Tabelas viram cards no mobile ---------- */
+
+  .table-scroll {
+    overflow-x: visible;
+  }
+
+  .table-scroll table,
+  .table-scroll thead,
+  .table-scroll tbody,
+  .table-scroll tr,
+  .table-scroll td {
+    display: block;
+    width: 100%;
+  }
+
+  .table-scroll thead {
+    display: none;
+  }
+
+  .table-scroll tr {
+    background: var(--surface-1);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 12px;
+    padding: 4px 14px;
+  }
+
+  .table-scroll tr:last-child {
+    margin-bottom: 0;
+  }
+
+  .table-scroll td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--gridline);
+    white-space: normal;
+    text-align: right;
+  }
+
+  .table-scroll td:last-child {
+    border-bottom: none;
+  }
+
+  .table-scroll td::before {
+    content: attr(data-label);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    color: var(--text-muted);
+    text-align: left;
+    margin-right: 8px;
+    flex-shrink: 0;
+  }
+
+  .table-scroll td[data-label=""]::before,
+  .table-scroll td:not([data-label])::before {
+    content: none;
   }
 }
 

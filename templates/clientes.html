@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Clientes - Deposito Baratao{% endblock %}
+{% block page_title %}Clientes{% endblock %}
+{% block content %}
+<form class="filters" id="filtros-form">
+  <label style="flex: 1; min-width: 200px;">
+    Buscar por nome
+    <input type="text" name="busca" placeholder="Ex: Joao" />
+  </label>
+  <button type="submit">Filtrar</button>
+  <button type="button" class="secondary" id="btn-limpar">Limpar</button>
+</form>
+
+<p style="color: var(--text-secondary); max-width: 640px; margin-top: -8px;">
+  Apenas pedidos com cliente identificado entram aqui. Clique em um cliente para ver o historico de pedidos dele.
+</p>
+
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Cliente</th>
+        <th>Pedidos</th>
+        <th>Valor total</th>
+        <th>Ticket medio</th>
+        <th>Ultima compra</th>
+        <th>Sinalizados</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-clientes">
+      <tr><td colspan="6" style="color: var(--text-muted);">Carregando...</td></tr>
+    </tbody>
+  </table>
+  <div class="pagination">
+    <span id="paginacao-info"></span>
+    <div class="pagination-buttons">
+      <button type="button" class="secondary" id="btn-anterior">Anterior</button>
+      <button type="button" class="secondary" id="btn-proxima">Proxima</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ static_url('js/common.js') }}"></script>
+<script src="{{ static_url('js/clientes.js') }}"></script>
+{% endblock %}

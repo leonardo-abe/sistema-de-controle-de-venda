@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Produtos - Deposito Baratao{% endblock %}
+{% block page_title %}Produtos{% endblock %}
+{% block content %}
+<form class="filters" id="filtros-form">
+  <label style="flex: 1; min-width: 200px;">
+    Buscar por nome
+    <input type="text" name="busca" placeholder="Ex: cimento" />
+  </label>
+  <label>
+    Grupo
+    <select name="grupo" id="filtro-grupo">
+      <option value="">Todos</option>
+    </select>
+  </label>
+  <label>
+    Marca
+    <select name="marca" id="filtro-marca">
+      <option value="">Todas</option>
+    </select>
+  </label>
+  <button type="submit">Filtrar</button>
+  <button type="button" class="secondary" id="btn-limpar">Limpar</button>
+</form>
+
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Cod.</th>
+        <th>Produto</th>
+        <th>Grupo</th>
+        <th>Marca</th>
+        <th>Qtd. vendida</th>
+        <th>Valor vendido</th>
+        <th>Margem</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-produtos">
+      <tr><td colspan="7" style="color: var(--text-muted);">Carregando...</td></tr>
+    </tbody>
+  </table>
+  <div class="pagination">
+    <span id="paginacao-info"></span>
+    <div class="pagination-buttons">
+      <button type="button" class="secondary" id="btn-anterior">Anterior</button>
+      <button type="button" class="secondary" id="btn-proxima">Proxima</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ static_url('js/common.js') }}"></script>
+<script src="{{ static_url('js/produtos.js') }}"></script>
+{% endblock %}

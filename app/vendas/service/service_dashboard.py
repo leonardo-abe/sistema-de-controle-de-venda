@@ -12,10 +12,10 @@ from app.vendas.dto.dashboard_dto import (
     SeriePontoSchema,
 )
 from app.vendas.models import ItemVenda, Pagamento, Pedido, Produto
+from app.vendas.service.auditoria import flag_recuperado
 
 TOP_N = 10
 LIMITE_AUDITORIA = 50
-DESCONTO_ALTO_PCT = 50.0
 
 
 @dataclass(frozen=True)
@@ -53,11 +53,6 @@ class ServiceDashboard:
             .where(Pedido.loja == loja_col, Pedido.pedido == pedido_col, Pedido.vendedor == vendedor)
             .exists()
         )
-
-    @staticmethod
-    def _flag_recuperado():
-        situacao_preenchida = Pedido.situacao.is_not(None) & (Pedido.situacao != "")
-        return situacao_preenchida | (Pedido.perc_desconto >= DESCONTO_ALTO_PCT)
 
     def _aplicar_filtros_pedido[T](self, stmt: Select[T], f: FiltrosDashboard) -> Select[T]:
         stmt = self._filtrar_periodo(stmt, Pedido.data, f.data_inicio, f.data_fim)
@@ -214,7 +209,7 @@ class ServiceDashboard:
         return [SeriePontoSchema(chave=chave, valor=valor) for chave, valor in resultado.items()]
 
     def auditoria_resumo(self, f: FiltrosDashboard) -> AuditoriaResumoSchema:
-        stmt = select(func.count(Pedido.id), func.coalesce(func.sum(Pedido.valor_desconto), 0.0)).where(self._flag_recuperado())
+        stmt = select(func.count(Pedido.id), func.coalesce(func.sum(Pedido.valor_desconto), 0.0)).where(flag_recuperado())
         stmt = self._aplicar_filtros_pedido(stmt, f)
         total, valor_desconto = self.session.execute(stmt).one()
         return AuditoriaResumoSchema(total_pedidos=total, valor_desconto_total=round(valor_desconto, 2))
@@ -223,7 +218,7 @@ class ServiceDashboard:
         vendedor = func.coalesce(Pedido.vendedor, "NAO INFORMADO")
         stmt = (
             select(vendedor, func.count(Pedido.id))
-            .where(self._flag_recuperado())
+            .where(flag_recuperado())
             .group_by(vendedor)
             .order_by(func.count(Pedido.id).desc())
             .limit(TOP_N)
@@ -233,7 +228,7 @@ class ServiceDashboard:
         return [SeriePontoSchema(chave=nome, valor=float(qtd)) for nome, qtd in rows]
 
     def auditoria_pedidos(self, f: FiltrosDashboard) -> list[PedidoAuditoriaSchema]:
-        stmt = select(Pedido).where(self._flag_recuperado())
+        stmt = select(Pedido).where(flag_recuperado())
         stmt = self._aplicar_filtros_pedido(stmt, f)
         stmt = stmt.order_by(Pedido.valor_desconto.desc()).limit(LIMITE_AUDITORIA)
         pedidos = self.session.execute(stmt).scalars().all()

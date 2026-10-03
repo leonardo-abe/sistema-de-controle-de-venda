@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block title %}Pedido {{ pedido }} - Deposito Baratao{% endblock %}
+{% block page_title %}Pedido {{ pedido }}{% endblock %}
+{% block content %}
+<a href="/pedidos" class="btn secondary" style="margin-bottom: 16px;">&larr; Voltar para pedidos</a>
+
+<div id="conteudo-pedido">
+  <p style="color: var(--text-muted);">Carregando...</p>
+</div>
+
+<script>
+  window.__PEDIDO__ = { loja: {{ loja }}, pedido: {{ pedido }} };
+</script>
+<script src="{{ static_url('js/common.js') }}"></script>
+<script src="{{ static_url('js/pedido_detalhe.js') }}"></script>
+{% endblock %}

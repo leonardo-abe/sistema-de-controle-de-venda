@@ -142,15 +142,15 @@
       .map(
         (p) => `
       <tr>
-        <td>${p.pedido}</td>
-        <td>${p.data}</td>
-        <td>${escapeHtml(p.vendedor) || "-"}</td>
-        <td>${escapeHtml(p.cliente) || "-"}</td>
-        <td>${moeda(p.total)}</td>
-        <td>${p.perc_desconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%</td>
-        <td>${moeda(p.valor_desconto)}</td>
-        <td>${moeda(p.valor_liquido)}</td>
-        <td>${badgeSituacao(p.situacao, p.perc_desconto)}</td>
+        <td data-label="Pedido"><a class="table-link" href="/pedidos/${p.loja}/${p.pedido}">${p.pedido}</a></td>
+        <td data-label="Data">${p.data}</td>
+        <td data-label="Vendedor">${escapeHtml(p.vendedor) || "-"}</td>
+        <td data-label="Cliente">${escapeHtml(p.cliente) || "-"}</td>
+        <td data-label="Total">${moeda(p.total)}</td>
+        <td data-label="% Desconto">${p.perc_desconto.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}%</td>
+        <td data-label="Valor desconto">${moeda(p.valor_desconto)}</td>
+        <td data-label="Valor liquido">${moeda(p.valor_liquido)}</td>
+        <td data-label="Situacao">${badgeSituacao(p.situacao, p.perc_desconto)}</td>
       </tr>`
       )
       .join("");

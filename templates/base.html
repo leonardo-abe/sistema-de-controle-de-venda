@@ -2,9 +2,9 @@
 <html lang="pt-br">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>{% block title %}Controle de Vendas{% endblock %}</title>
-  <link rel="stylesheet" href="/static/css/style.css" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>{% block title %}Deposito Baratao{% endblock %}</title>
+  <link rel="stylesheet" href="{{ static_url('css/style.css') }}" />
   {% block head %}{% endblock %}
 </head>
 <body class="{{ '' if current_user else 'no-shell' }}">
@@ -13,20 +13,31 @@
     <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
     <aside class="sidebar" id="sidebar">
       <div class="sidebar-header">
-        <span class="logo-badge">CV</span>
-        <span class="logo-text">Controle de Vendas</span>
+        <span class="logo-text">Deposito Baratao</span>
       </div>
       <nav class="sidebar-nav">
-        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}">
+        <a href="/" class="nav-item {{ 'active' if request.url.path == '/' else '' }}" title="Dashboard">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="12" width="4" height="9"/><rect x="10" y="7" width="4" height="14"/><rect x="17" y="3" width="4" height="18"/></svg>
           <span class="nav-label">Dashboard</span>
         </a>
-        <a href="/importar" class="nav-item {{ 'active' if request.url.path == '/importar' else '' }}">
+        <a href="/pedidos" class="nav-item {{ 'active' if request.url.path.startswith('/pedidos') else '' }}" title="Pedidos">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          <span class="nav-label">Pedidos</span>
+        </a>
+        <a href="/clientes" class="nav-item {{ 'active' if request.url.path.startswith('/clientes') else '' }}" title="Clientes">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="nav-label">Clientes</span>
+        </a>
+        <a href="/produtos" class="nav-item {{ 'active' if request.url.path.startswith('/produtos') else '' }}" title="Produtos">
+          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          <span class="nav-label">Produtos</span>
+        </a>
+        <a href="/importar" class="nav-item {{ 'active' if request.url.path == '/importar' else '' }}" title="Importar">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           <span class="nav-label">Importar</span>
         </a>
         {% if current_user.role == 'ADMIN' %}
-        <a href="/usuarios" class="nav-item {{ 'active' if request.url.path == '/usuarios' else '' }}">
+        <a href="/usuarios" class="nav-item {{ 'active' if request.url.path == '/usuarios' else '' }}" title="Usuarios">
           <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
           <span class="nav-label">Usuarios</span>
         </a>
@@ -51,8 +62,9 @@
     <div class="app-main">
       {% if current_user %}
       <header class="topbar">
-        <button type="button" class="icon-btn mobile-only" id="menu-toggle" aria-label="Abrir menu">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        <button type="button" class="icon-btn menu-toggle-btn" id="menu-toggle" aria-label="Abrir menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+          <span class="menu-toggle-label">Menu</span>
         </button>
         <h1 class="page-title">{% block page_title %}{% endblock %}</h1>
       </header>
@@ -66,11 +78,16 @@
   <script>
     (function () {
       const shell = document.getElementById("app-shell");
-      const toggle = document.getElementById("menu-toggle");
+      const menuToggle = document.getElementById("menu-toggle");
       const backdrop = document.getElementById("sidebar-backdrop");
-      function closeMenu() { shell.classList.remove("sidebar-open"); }
-      toggle && toggle.addEventListener("click", () => shell.classList.toggle("sidebar-open"));
-      backdrop && backdrop.addEventListener("click", closeMenu);
+
+      function setOpen(open) {
+        shell.classList.toggle("sidebar-open", open);
+        menuToggle.setAttribute("aria-label", open ? "Fechar menu" : "Abrir menu");
+      }
+
+      menuToggle.addEventListener("click", () => setOpen(!shell.classList.contains("sidebar-open")));
+      backdrop && backdrop.addEventListener("click", () => setOpen(false));
     })();
   </script>
   {% endif %}

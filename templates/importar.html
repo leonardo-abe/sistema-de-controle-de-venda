@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Importar - Controle de Vendas{% endblock %}
+{% block title %}Importar - Deposito Baratao{% endblock %}
 {% block page_title %}Importar{% endblock %}
 {% block content %}
 <p style="color: var(--text-secondary); max-width: 640px; margin-top: 0;">
@@ -50,11 +50,11 @@
     <tbody>
       {% for batch in batches %}
       <tr>
-        <td>{{ batch.data_referencia }}</td>
-        <td>{{ batch.total_pedidos }}</td>
-        <td>{{ batch.total_pagamentos }}</td>
-        <td>{{ batch.total_itens }}</td>
-        <td>{{ batch.importado_em }}</td>
+        <td data-label="Data referencia">{{ batch.data_referencia }}</td>
+        <td data-label="Pedidos">{{ batch.total_pedidos }}</td>
+        <td data-label="Pagamentos">{{ batch.total_pagamentos }}</td>
+        <td data-label="Itens">{{ batch.total_itens }}</td>
+        <td data-label="Importado em">{{ batch.importado_em }}</td>
       </tr>
       {% else %}
       <tr><td colspan="5" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>

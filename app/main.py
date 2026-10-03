@@ -13,7 +13,7 @@ from app.auth.models import User
 from app.infra.db.sqlite import Base, SessionLocal, engine
 from app.shared.security.security import hash_password
 from app.shared.settings import settings
-from app.vendas import router_dashboard, router_import
+from app.vendas import router_clientes, router_dashboard, router_import, router_pedidos, router_produtos
 from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, Produto  # noqa: F401
 
 
@@ -40,7 +40,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Controle de Vendas", lifespan=lifespan)
+app = FastAPI(title="Deposito Baratao", lifespan=lifespan)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
@@ -55,4 +55,7 @@ async def auth_redirect_handler(request: Request, exc: HTTPException):
 app.include_router(router_auth)
 app.include_router(router_users)
 app.include_router(router_import)
+app.include_router(router_pedidos)
+app.include_router(router_clientes)
+app.include_router(router_produtos)
 app.include_router(router_dashboard)

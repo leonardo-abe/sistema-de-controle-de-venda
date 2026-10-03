@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% block title %}Usuarios - Controle de Vendas{% endblock %}
+{% block title %}Usuarios - Deposito Baratao{% endblock %}
 {% block page_title %}Usuarios{% endblock %}
 {% block content %}
 {% if error %}
@@ -43,11 +43,11 @@
     <tbody>
       {% for user in users %}
       <tr>
-        <td>{{ user.name }}</td>
-        <td>{{ user.email }}</td>
-        <td><span class="badge {{ 'badge-admin' if user.role == 'ADMIN' else 'badge-viewer' }}">{{ user.role }}</span></td>
-        <td>{{ 'Ativo' if user.is_active else 'Inativo' }}</td>
-        <td style="display:flex; gap:8px;">
+        <td data-label="Nome">{{ user.name }}</td>
+        <td data-label="Email">{{ user.email }}</td>
+        <td data-label="Perfil"><span class="badge {{ 'badge-admin' if user.role == 'ADMIN' else 'badge-viewer' }}">{{ user.role }}</span></td>
+        <td data-label="Status">{{ 'Ativo' if user.is_active else 'Inativo' }}</td>
+        <td data-label="Acoes" style="display:flex; gap:8px;">
           <form method="post" action="/usuarios/{{ user.id }}/toggle-ativo">
             <input type="hidden" name="is_active" value="{{ 'false' if user.is_active else 'true' }}" />
             <button type="submit" class="secondary">{{ 'Desativar' if user.is_active else 'Ativar' }}</button>

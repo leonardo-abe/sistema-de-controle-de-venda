@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Pedidos - Deposito Baratao{% endblock %}
+{% block page_title %}Pedidos{% endblock %}
+{% block content %}
+<form class="filters" id="filtros-form">
+  <label>
+    Data inicio
+    <input type="date" name="data_inicio" />
+  </label>
+  <label>
+    Data fim
+    <input type="date" name="data_fim" />
+  </label>
+  <label>
+    Vendedor
+    <select name="vendedor" id="filtro-vendedor">
+      <option value="">Todos</option>
+    </select>
+  </label>
+  <label>
+    Forma de pagamento
+    <select name="forma_pagamento" id="filtro-pagamento">
+      <option value="">Todas</option>
+    </select>
+  </label>
+  <label style="flex: 1; min-width: 180px;">
+    Buscar (pedido ou cliente)
+    <input type="text" name="busca" placeholder="Ex: 618739 ou nome" />
+  </label>
+  <label style="flex-direction: row; align-items: center; gap: 6px;">
+    <input type="checkbox" name="apenas_sinalizados" value="true" style="width: auto;" />
+    Somente sinalizados
+  </label>
+  <button type="submit">Filtrar</button>
+  <button type="button" class="secondary" id="btn-limpar">Limpar</button>
+</form>
+
+<div class="card table-scroll">
+  <table>
+    <thead>
+      <tr>
+        <th>Pedido</th>
+        <th>Data</th>
+        <th>Vendedor</th>
+        <th>Cliente</th>
+        <th>Total</th>
+        <th>% Desconto</th>
+        <th>Valor liquido</th>
+        <th>Situacao</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-pedidos">
+      <tr><td colspan="8" style="color: var(--text-muted);">Carregando...</td></tr>
+    </tbody>
+  </table>
+  <div class="pagination">
+    <span id="paginacao-info"></span>
+    <div class="pagination-buttons">
+      <button type="button" class="secondary" id="btn-anterior">Anterior</button>
+      <button type="button" class="secondary" id="btn-proxima">Proxima</button>
+    </div>
+  </div>
+</div>
+
+<script src="{{ static_url('js/common.js') }}"></script>
+<script src="{{ static_url('js/pedidos.js') }}"></script>
+{% endblock %}
