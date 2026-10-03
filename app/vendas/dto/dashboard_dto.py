@@ -14,7 +14,9 @@ class KpiResumoSchema(BaseModel):
     ticket_medio: float
     total_desconto: float
     total_itens_vendidos: float
+    custo_total: float
     margem_bruta: float
+    margem_percentual: float
 
 
 class SeriePontoSchema(BaseModel):

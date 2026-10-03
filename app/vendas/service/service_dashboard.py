@@ -99,12 +99,15 @@ class ServiceDashboard:
 
         stmt_itens = select(
             func.coalesce(func.sum(ItemVenda.quantidade), 0.0),
+            func.coalesce(func.sum(ItemVenda.custo), 0.0),
             func.coalesce(func.sum(ItemVenda.valor_total - ItemVenda.custo), 0.0),
+            func.coalesce(func.sum(ItemVenda.valor_total), 0.0),
         )
         stmt_itens = self._aplicar_filtros_item(stmt_itens, f)
-        total_itens_vendidos, margem_bruta = self.session.execute(stmt_itens).one()
+        total_itens_vendidos, custo_total, margem_bruta, valor_total_itens = self.session.execute(stmt_itens).one()
 
         ticket_medio = (valor_total_liquido / total_pedidos) if total_pedidos else 0.0
+        margem_percentual = (margem_bruta / valor_total_itens * 100) if valor_total_itens else 0.0
 
         return KpiResumoSchema(
             total_pedidos=total_pedidos,
@@ -112,7 +115,9 @@ class ServiceDashboard:
             ticket_medio=round(ticket_medio, 2),
             total_desconto=round(total_desconto, 2),
             total_itens_vendidos=round(total_itens_vendidos, 2),
+            custo_total=round(custo_total, 2),
             margem_bruta=round(margem_bruta, 2),
+            margem_percentual=round(margem_percentual, 2),
         )
 
     def vendas_por_dia(self, f: FiltrosDashboard) -> list[SeriePontoSchema]:

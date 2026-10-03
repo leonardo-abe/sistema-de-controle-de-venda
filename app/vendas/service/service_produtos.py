@@ -44,10 +44,11 @@ class ServiceProdutos:
 
         quantidade = func.coalesce(func.sum(ItemVenda.quantidade), 0.0)
         valor = func.coalesce(func.sum(ItemVenda.valor_total), 0.0)
+        custo = func.coalesce(func.sum(ItemVenda.custo), 0.0)
         margem = func.coalesce(func.sum(ItemVenda.valor_total - ItemVenda.custo), 0.0)
 
         stmt = (
-            select(Produto.cod_prod, Produto.nome, Produto.grupo, Produto.marca, quantidade, valor, margem)
+            select(Produto.cod_prod, Produto.nome, Produto.grupo, Produto.marca, quantidade, valor, custo, margem)
             .select_from(Produto)
             .outerjoin(ItemVenda, ItemVenda.cod_prod == Produto.cod_prod)
         )
@@ -74,9 +75,11 @@ class ServiceProdutos:
                 marca=marca_item,
                 quantidade_vendida=round(qtd, 2),
                 valor_vendido=round(val, 2),
+                custo=round(cst, 2),
                 margem=round(mg, 2),
+                margem_percentual=round((mg / val) * 100, 2) if val else 0.0,
             )
-            for cod_prod, nome, grupo_item, marca_item, qtd, val, mg in rows
+            for cod_prod, nome, grupo_item, marca_item, qtd, val, cst, mg in rows
         ]
 
         return ProdutoPaginaSchema(itens=itens, total=total, pagina=pagina, por_pagina=por_pagina)

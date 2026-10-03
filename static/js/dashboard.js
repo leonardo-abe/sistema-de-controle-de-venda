@@ -190,13 +190,16 @@
     document.getElementById("kpi-ticket").textContent = moeda(data.kpis.ticket_medio);
     document.getElementById("kpi-desconto").textContent = moeda(data.kpis.total_desconto);
     document.getElementById("kpi-itens").textContent = numero(data.kpis.total_itens_vendidos);
+    document.getElementById("kpi-custo").textContent = moeda(data.kpis.custo_total);
     document.getElementById("kpi-margem").textContent = moeda(data.kpis.margem_bruta);
+    document.getElementById("kpi-margem-percentual").textContent = `${data.kpis.margem_percentual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}% de margem`;
 
     renderTrend("kpi-pedidos-trend", data.kpis.total_pedidos, anterior && anterior.total_pedidos);
     renderTrend("kpi-valor-trend", data.kpis.valor_total_liquido, anterior && anterior.valor_total_liquido);
     renderTrend("kpi-ticket-trend", data.kpis.ticket_medio, anterior && anterior.ticket_medio);
     renderTrend("kpi-desconto-trend", data.kpis.total_desconto, anterior && anterior.total_desconto, { inverso: true });
     renderTrend("kpi-itens-trend", data.kpis.total_itens_vendidos, anterior && anterior.total_itens_vendidos);
+    renderTrend("kpi-custo-trend", data.kpis.custo_total, anterior && anterior.custo_total, { inverso: true });
     renderTrend("kpi-margem-trend", data.kpis.margem_bruta, anterior && anterior.margem_bruta);
 
     renderLine(

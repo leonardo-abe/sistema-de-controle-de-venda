@@ -1,5 +1,5 @@
 (function () {
-  const { moeda, numero, escapeHtml } = window.Fmt;
+  const { moeda, numero, percentual, escapeHtml } = window.Fmt;
   let paginaAtual = 1;
   let totalPaginas = 1;
 
@@ -28,12 +28,13 @@
   function renderTabela(itens) {
     const tbody = document.getElementById("tabela-produtos");
     if (!itens.length) {
-      tbody.innerHTML = '<tr><td colspan="7" style="color: var(--text-muted);">Nenhum produto encontrado.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="9" style="color: var(--text-muted);">Nenhum produto encontrado.</td></tr>';
       return;
     }
     tbody.innerHTML = itens
-      .map(
-        (p) => `
+      .map((p) => {
+        const corMargem = p.margem < 0 ? "var(--critical)" : "var(--good)";
+        return `
       <tr>
         <td data-label="Cod.">${p.cod_prod}</td>
         <td data-label="Produto">${escapeHtml(p.nome)}</td>
@@ -41,8 +42,11 @@
         <td data-label="Marca">${escapeHtml(p.marca) || "-"}</td>
         <td data-label="Qtd. vendida">${numero(p.quantidade_vendida)}</td>
         <td data-label="Valor vendido">${moeda(p.valor_vendido)}</td>
-        <td data-label="Margem">${moeda(p.margem)}</td>
-      </tr>`
+        <td data-label="Custo">${moeda(p.custo)}</td>
+        <td data-label="Margem" style="color: ${corMargem}; font-weight: 600;">${moeda(p.margem)}</td>
+        <td data-label="Margem %" style="color: ${corMargem}; font-weight: 600;">${percentual(p.margem_percentual)}</td>
+      </tr>`;
+      }
       )
       .join("");
   }
