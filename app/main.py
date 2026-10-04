@@ -1,8 +1,12 @@
+import secrets
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.exceptions import HTTPException
+from fastapi.openapi.docs import get_redoc_html, get_swagger_ui_html
+from fastapi.openapi.utils import get_openapi
 from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from fastapi.staticfiles import StaticFiles
 from starlette.requests import Request
 from starlette.status import HTTP_401_UNAUTHORIZED
@@ -40,9 +44,37 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(title="Deposito Baratao", lifespan=lifespan)
+app = FastAPI(title="Deposito Baratao", lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
 app.mount("/static", StaticFiles(directory="static"), name="static")
+
+docs_basic_auth = HTTPBasic()
+
+
+def verificar_docs_auth(credentials: HTTPBasicCredentials = Depends(docs_basic_auth)) -> None:
+    usuario_ok = secrets.compare_digest(credentials.username, settings.docs_user)
+    senha_ok = secrets.compare_digest(credentials.password, settings.docs_password)
+    if not (usuario_ok and senha_ok):
+        raise HTTPException(
+            status_code=401,
+            detail="Credenciais invalidas",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+
+
+@app.get("/openapi.json", include_in_schema=False)
+async def openapi_json(_: None = Depends(verificar_docs_auth)):
+    return JSONResponse(get_openapi(title=app.title, version="1.0.0", routes=app.routes))
+
+
+@app.get("/docs", include_in_schema=False)
+async def docs(_: None = Depends(verificar_docs_auth)):
+    return get_swagger_ui_html(openapi_url="/openapi.json", title=f"{app.title} - Docs")
+
+
+@app.get("/redoc", include_in_schema=False)
+async def redoc(_: None = Depends(verificar_docs_auth)):
+    return get_redoc_html(openapi_url="/openapi.json", title=f"{app.title} - ReDoc")
 
 
 @app.exception_handler(HTTPException)

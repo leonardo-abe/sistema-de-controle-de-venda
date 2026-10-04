@@ -14,5 +14,8 @@ class Settings:
 
     session_cookie_name: str = "access_token"
 
+    docs_user: str = config("DOCS_USER", default="admin")
+    docs_password: str = config("DOCS_PASSWORD", default="troque-esta-senha")
+
 
 settings = Settings()
