@@ -1,3 +1,5 @@
+from collections import Counter
+
 from fastapi import HTTPException, UploadFile, status
 
 from app.vendas.dto.import_dto import ImportResultSchema
@@ -39,11 +41,16 @@ class ServiceImport:
                 ),
             )
 
-        data_referencia = data_pedidos
-
         pedidos_rows = read_rows(arquivo_pedidos.file.read())
         pagamentos_rows = read_rows(arquivo_pagamentos.file.read())
         produtos_rows = read_rows(arquivo_produtos.file.read())
+
+        # O nome do arquivo costuma trazer a data em que ele foi GERADO, nao
+        # necessariamente a data das vendas (ex.: exportado na manha seguinte).
+        # Por isso a referencia real usada no sistema e a data que de fato
+        # aparece nas linhas do CSV, nao a do nome do arquivo.
+        datas_encontradas = Counter(parse_data(row["Data"]) for row in pedidos_rows if row.get("Data"))
+        data_referencia = datas_encontradas.most_common(1)[0][0] if datas_encontradas else data_pedidos
 
         substituiu = False
         batch_existente = self.repository.get_batch_by_data(data_referencia)

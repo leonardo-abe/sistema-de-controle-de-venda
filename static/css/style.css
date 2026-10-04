@@ -261,6 +261,8 @@ a {
 .icon-btn svg {
   width: 20px;
   height: 20px;
+  flex-shrink: 0;
+  min-width: 20px;
 }
 
 .icon-btn:hover {
@@ -605,6 +607,38 @@ th {
   font-size: 12px;
   color: var(--text-muted);
   font-weight: 600;
+}
+
+.password-field {
+  position: relative;
+  display: flex;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 30px;
+  background: transparent;
+  border-color: transparent;
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  min-width: 18px;
+}
+
+.password-toggle.active {
+  color: var(--brand-red);
 }
 
 /* ---------- Responsive ---------- */
