@@ -79,6 +79,9 @@ async def redoc(_: None = Depends(verificar_docs_auth)):
 
 @app.exception_handler(HTTPException)
 async def auth_redirect_handler(request: Request, exc: HTTPException):
+    eh_desafio_basic = exc.headers and "WWW-Authenticate" in exc.headers
+    if exc.status_code == HTTP_401_UNAUTHORIZED and eh_desafio_basic:
+        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail}, headers=exc.headers)
     if exc.status_code == HTTP_401_UNAUTHORIZED and "application/json" not in request.headers.get("accept", ""):
         return RedirectResponse(url="/login")
     return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
