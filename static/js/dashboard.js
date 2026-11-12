@@ -288,6 +288,27 @@
     renderTabelaAuditoria(data.auditoria_pedidos);
   }
 
+  function formatarData(data) {
+    const ano = data.getFullYear();
+    const mes = String(data.getMonth() + 1).padStart(2, "0");
+    const dia = String(data.getDate()).padStart(2, "0");
+    return `${ano}-${mes}-${dia}`;
+  }
+
+  function periodoMesVigente() {
+    const hoje = new Date();
+    const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    return { data_inicio: formatarData(inicio), data_fim: formatarData(fim) };
+  }
+
+  function aplicarPeriodoPadrao() {
+    const { data_inicio, data_fim } = periodoMesVigente();
+    form.data_inicio.value = data_inicio;
+    form.data_fim.value = data_fim;
+    return { data_inicio, data_fim };
+  }
+
   const form = document.getElementById("filtros-form");
   form.addEventListener("submit", (event) => {
     event.preventDefault();
@@ -301,9 +322,10 @@
 
   document.getElementById("btn-limpar").addEventListener("click", () => {
     form.reset();
-    carregar({});
+    const params = aplicarPeriodoPadrao();
+    carregar(params);
   });
 
   carregarFiltros();
-  carregar({});
+  carregar(aplicarPeriodoPadrao());
 })();
