@@ -209,7 +209,7 @@
     document.getElementById("kpi-valor").textContent = moeda(data.kpis.valor_total_liquido);
     document.getElementById("kpi-ticket").textContent = moeda(data.kpis.ticket_medio);
     document.getElementById("kpi-desconto").textContent = moeda(data.kpis.total_desconto);
-    document.getElementById("kpi-itens").textContent = numero(data.kpis.total_itens_vendidos);
+    document.getElementById("kpi-itens").textContent = `${numero(data.kpis.total_itens_vendidos)} un.`;
     document.getElementById("kpi-custo").textContent = moeda(data.kpis.custo_total);
     document.getElementById("kpi-margem").textContent = moeda(data.kpis.margem_bruta);
     document.getElementById("kpi-margem-percentual").textContent = `${data.kpis.margem_percentual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}% de margem`;
