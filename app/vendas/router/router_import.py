@@ -25,6 +25,20 @@ def import_page(
     )
 
 
+@router.get("/divergencias")
+def divergencias_page(
+    request: Request,
+    repository: RepositoryVendas = Depends(get_repository_vendas),
+    current_user: dict[str, Any] = Depends(get_current_user),
+):
+    divergencias = repository.list_divergencias()
+    return templates.TemplateResponse(
+        request,
+        "divergencias.html",
+        {"divergencias": divergencias, "current_user": current_user},
+    )
+
+
 @router.post("")
 def import_submit(
     request: Request,

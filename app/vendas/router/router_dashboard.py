@@ -65,6 +65,7 @@ def api_resumo(
         "pedidos_por_cidade": service.pedidos_por_cidade(filtros),
         "identificacao_cliente": service.identificacao_cliente(filtros),
         "auditoria_resumo": service.auditoria_resumo(filtros),
+        "divergencias_total": service.divergencias_total(filtros),
         "auditoria_por_vendedor": service.auditoria_por_vendedor(filtros),
         "auditoria_pedidos": service.auditoria_pedidos(filtros),
     }
