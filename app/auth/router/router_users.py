@@ -80,7 +80,7 @@ def change_password(
             {"users": users, "current_user": current_user, "error": detail},
             status_code=400,
         )
-    return RedirectResponse(url="/usuarios", status_code=status.HTTP_303_SEE_OTHER)
+    return RedirectResponse(url="/usuarios?senha_atualizada=1", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/{user_id}/excluir")

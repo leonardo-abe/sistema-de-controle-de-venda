@@ -5,6 +5,9 @@
 {% if error %}
 <div class="alert alert-error">{{ error }}</div>
 {% endif %}
+{% if request.query_params.get('senha_atualizada') %}
+<div class="alert alert-success" id="alert-senha-ok">Senha atualizada com sucesso.</div>
+{% endif %}
 
 <form method="post" action="/usuarios" class="card" style="margin-bottom: 24px; display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
   <label style="display:flex; flex-direction:column; gap:4px;">
@@ -52,10 +55,7 @@
             <input type="hidden" name="is_active" value="{{ 'false' if user.is_active else 'true' }}" />
             <button type="submit" class="secondary">{{ 'Desativar' if user.is_active else 'Ativar' }}</button>
           </form>
-          <form method="post" action="/usuarios/{{ user.id }}/senha" style="display:flex; gap:4px; align-items:center;">
-            <input type="password" name="password" placeholder="Nova senha" required minlength="6" style="width: 120px;" />
-            <button type="submit" class="secondary">Alterar senha</button>
-          </form>
+          <button type="button" class="secondary btn-alterar-senha" data-user-id="{{ user.id }}" data-user-name="{{ user.name }}">Alterar senha</button>
           {% if user.id != current_user.sub|int %}
           <form method="post" action="/usuarios/{{ user.id }}/excluir" onsubmit="return confirm('Remover este usuario?');">
             <button type="submit" class="secondary">Excluir</button>
@@ -67,4 +67,58 @@
     </tbody>
   </table>
 </div>
+
+<div class="modal-overlay hidden" id="modal-senha">
+  <div class="modal-box card">
+    <h3 style="margin: 0 0 4px;">Alterar senha</h3>
+    <p style="margin: 0 0 16px; color: var(--text-muted); font-size: 13px;">
+      Usuario: <strong id="modal-senha-nome"></strong>
+    </p>
+    <form method="post" id="form-senha" style="display:flex; flex-direction:column; gap:12px;">
+      <label style="display:flex; flex-direction:column; gap:4px;">
+        <span style="font-size: 12px; color: var(--text-muted);">Nova senha</span>
+        <input type="password" name="password" id="modal-senha-input" required minlength="6" autocomplete="new-password" />
+      </label>
+      <div style="display:flex; gap:8px; justify-content:flex-end;">
+        <button type="button" class="secondary" id="modal-senha-cancelar">Cancelar</button>
+        <button type="submit">Salvar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const overlay = document.getElementById("modal-senha");
+    const nomeEl = document.getElementById("modal-senha-nome");
+    const form = document.getElementById("form-senha");
+    const input = document.getElementById("modal-senha-input");
+
+    function abrirModal(userId, userName) {
+      nomeEl.textContent = userName;
+      form.action = `/usuarios/${userId}/senha`;
+      input.value = "";
+      overlay.classList.remove("hidden");
+      input.focus();
+    }
+
+    function fecharModal() {
+      overlay.classList.add("hidden");
+    }
+
+    document.querySelectorAll(".btn-alterar-senha").forEach((btn) => {
+      btn.addEventListener("click", () => abrirModal(btn.dataset.userId, btn.dataset.userName));
+    });
+
+    document.getElementById("modal-senha-cancelar").addEventListener("click", fecharModal);
+    overlay.addEventListener("click", (event) => {
+      if (event.target === overlay) fecharModal();
+    });
+
+    const alertaSenha = document.getElementById("alert-senha-ok");
+    if (alertaSenha) {
+      setTimeout(() => alertaSenha.remove(), 4000);
+    }
+  })();
+</script>
 {% endblock %}
