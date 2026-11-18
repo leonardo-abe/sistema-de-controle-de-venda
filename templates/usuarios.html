@@ -47,10 +47,14 @@
         <td data-label="Email">{{ user.email }}</td>
         <td data-label="Perfil"><span class="badge {{ 'badge-admin' if user.role == 'ADMIN' else 'badge-viewer' }}">{{ user.role }}</span></td>
         <td data-label="Status">{{ 'Ativo' if user.is_active else 'Inativo' }}</td>
-        <td data-label="Acoes" style="display:flex; gap:8px;">
+        <td data-label="Acoes" style="display:flex; gap:8px; align-items:center; flex-wrap: wrap;">
           <form method="post" action="/usuarios/{{ user.id }}/toggle-ativo">
             <input type="hidden" name="is_active" value="{{ 'false' if user.is_active else 'true' }}" />
             <button type="submit" class="secondary">{{ 'Desativar' if user.is_active else 'Ativar' }}</button>
+          </form>
+          <form method="post" action="/usuarios/{{ user.id }}/senha" style="display:flex; gap:4px; align-items:center;">
+            <input type="password" name="password" placeholder="Nova senha" required minlength="6" style="width: 120px;" />
+            <button type="submit" class="secondary">Alterar senha</button>
           </form>
           {% if user.id != current_user.sub|int %}
           <form method="post" action="/usuarios/{{ user.id }}/excluir" onsubmit="return confirm('Remover este usuario?');">

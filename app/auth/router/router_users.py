@@ -61,6 +61,28 @@ def toggle_active(
     return RedirectResponse(url="/usuarios", status_code=status.HTTP_303_SEE_OTHER)
 
 
+@router.post("/{user_id}/senha")
+def change_password(
+    request: Request,
+    user_id: int,
+    password: str = Form(..., min_length=6),
+    service: ServiceUser = Depends(get_user_service),
+    current_user: dict[str, Any] = Depends(require_admin),
+):
+    try:
+        service.update_user(user_id, UserUpdateSchema(password=password))
+    except Exception as exc:
+        users = service.list_users()
+        detail = getattr(exc, "detail", str(exc))
+        return templates.TemplateResponse(
+            request,
+            "usuarios.html",
+            {"users": users, "current_user": current_user, "error": detail},
+            status_code=400,
+        )
+    return RedirectResponse(url="/usuarios", status_code=status.HTTP_303_SEE_OTHER)
+
+
 @router.post("/{user_id}/excluir")
 def delete_user(
     user_id: int,
