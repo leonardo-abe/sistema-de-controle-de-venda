@@ -16,10 +16,6 @@
   Importacao concluida para {{ resultado.data_referencia }}:
   {{ resultado.total_pedidos }} pedidos, {{ resultado.total_pagamentos }} pagamentos, {{ resultado.total_itens }} itens.
   {% if resultado.substituiu_batch_anterior %}(dados anteriores desta data foram substituidos){% endif %}
-  {% if resultado.total_divergencias %}
-  <br />{{ resultado.total_divergencias }} pedido(s) vieram com data diferente da registrada anteriormente -
-  <a href="/importar/divergencias" class="table-link">ver divergencias</a>.
-  {% endif %}
 </div>
 {% endif %}
 
@@ -66,8 +62,4 @@
     </tbody>
   </table>
 </div>
-
-<p style="margin-top: 16px;">
-  <a href="/importar/divergencias" class="table-link">Ver divergencias de pedidos detectadas &rarr;</a>
-</p>
 {% endblock %}

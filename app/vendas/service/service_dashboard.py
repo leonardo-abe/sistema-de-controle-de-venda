@@ -11,7 +11,7 @@ from app.vendas.dto.dashboard_dto import (
     SerieDuplaSchema,
     SeriePontoSchema,
 )
-from app.vendas.models import ItemVenda, Pagamento, Pedido, PedidoDivergencia, Produto
+from app.vendas.models import ItemVenda, Pagamento, Pedido, Produto
 from app.vendas.service.auditoria import flag_recuperado
 
 TOP_N = 10
@@ -231,11 +231,6 @@ class ServiceDashboard:
         stmt = self._aplicar_filtros_pedido(stmt, f)
         rows = self.session.execute(stmt).all()
         return [SeriePontoSchema(chave=nome, valor=float(qtd)) for nome, qtd in rows]
-
-    def divergencias_total(self, f: FiltrosDashboard) -> int:
-        stmt = select(func.count(PedidoDivergencia.id))
-        stmt = self._filtrar_periodo(stmt, func.date(PedidoDivergencia.detectado_em), f.data_inicio, f.data_fim)
-        return self.session.execute(stmt).scalar_one()
 
     def auditoria_pedidos(self, f: FiltrosDashboard) -> list[PedidoAuditoriaSchema]:
         stmt = select(Pedido).where(flag_recuperado())

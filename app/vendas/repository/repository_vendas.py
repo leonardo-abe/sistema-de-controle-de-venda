@@ -4,7 +4,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
-from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, PedidoDivergencia, Produto
+from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, Produto
 
 
 class RepositoryVendas:
@@ -21,30 +21,6 @@ class RepositoryVendas:
         self.session.execute(delete(Pedido).where(Pedido.import_batch_id == batch_id))
         self.session.execute(delete(ImportBatch).where(ImportBatch.id == batch_id))
         self.session.commit()
-
-    def get_batch_by_id(self, batch_id: int) -> ImportBatch | None:
-        stmt = select(ImportBatch).where(ImportBatch.id == batch_id)
-        return self.session.execute(stmt).scalar_one_or_none()
-
-    def get_pedido_por_chave(self, loja: int, pedido: int) -> Pedido | None:
-        stmt = select(Pedido).where(Pedido.loja == loja, Pedido.pedido == pedido)
-        return self.session.execute(stmt).scalar_one_or_none()
-
-    def delete_pedido_por_chave(self, loja: int, pedido: int) -> None:
-        self.session.execute(delete(ItemVenda).where(ItemVenda.loja == loja, ItemVenda.pedido == pedido))
-        self.session.execute(delete(Pagamento).where(Pagamento.loja == loja, Pagamento.pedido == pedido))
-        self.session.execute(delete(Pedido).where(Pedido.loja == loja, Pedido.pedido == pedido))
-        self.session.commit()
-
-    def registrar_divergencias(self, divergencias: list[PedidoDivergencia]) -> None:
-        if not divergencias:
-            return
-        self.session.bulk_save_objects(divergencias)
-        self.session.commit()
-
-    def list_divergencias(self) -> list[PedidoDivergencia]:
-        stmt = select(PedidoDivergencia).order_by(PedidoDivergencia.detectado_em.desc())
-        return list(self.session.execute(stmt).scalars().all())
 
     def create_batch(self, batch: ImportBatch) -> ImportBatch:
         self.session.add(batch)

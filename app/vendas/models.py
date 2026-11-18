@@ -70,19 +70,6 @@ class Produto(Base):
     secao: Mapped[str | None] = mapped_column(String(120))
 
 
-class PedidoDivergencia(Base):
-    __tablename__ = "pedidos_divergencias"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    loja: Mapped[int]
-    pedido: Mapped[int] = mapped_column(index=True)
-    data_anterior: Mapped[date_type] = mapped_column(Date)
-    data_nova: Mapped[date_type] = mapped_column(Date)
-    batch_anterior_id: Mapped[int | None]
-    batch_novo_id: Mapped[int]
-    detectado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
-
-
 class ItemVenda(Base):
     __tablename__ = "itens_venda"
     __table_args__ = (

@@ -4,7 +4,7 @@ from fastapi import HTTPException, UploadFile, status
 
 from app.vendas.dto.import_dto import ImportResultSchema
 from app.vendas.interface.irepository_vendas import VendasRepositoryProtocol
-from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, PedidoDivergencia, Produto
+from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, Produto
 from app.vendas.service.csv_parsing import (
     CsvValidationError,
     PAGAMENTOS_PATTERN,
@@ -71,10 +71,6 @@ class ServiceImport:
         pagamentos = self._montar_pagamentos(pagamentos_rows, batch.id)
         produtos, itens = self._montar_produtos_e_itens(produtos_rows, batch.id)
 
-        divergencias = self._resolver_conflitos_de_pedido(pedidos, batch.id, data_referencia)
-        if divergencias:
-            self.repository.registrar_divergencias(divergencias)
-
         self.repository.bulk_insert_pedidos(pedidos)
         self.repository.upsert_produtos(produtos)
         self.repository.bulk_insert_pagamentos(pagamentos)
@@ -92,39 +88,7 @@ class ServiceImport:
             total_itens=len(itens),
             importado_em=batch.importado_em,
             substituiu_batch_anterior=substituiu,
-            total_divergencias=len(divergencias),
         )
-
-    def _resolver_conflitos_de_pedido(
-        self, pedidos: list[Pedido], batch_novo_id: int, data_referencia_novo
-    ) -> list[PedidoDivergencia]:
-        # Um pedido e unico por (loja, pedido), independente de data. Se o mesmo
-        # numero ja existe em outro lote, isso nao pode travar a importacao:
-        # resolvemos automaticamente (a versao mais recente vence) e deixamos um
-        # registro de auditoria sempre que o pedido mudou de data ou ficou
-        # arquivado num lote de outra data (ex.: uma exportacao anterior o
-        # incluiu, por engano, no lote do dia errado).
-        divergencias = []
-        for pedido in pedidos:
-            existente = self.repository.get_pedido_por_chave(pedido.loja, pedido.pedido)
-            if existente is None:
-                continue
-
-            lote_anterior = self.repository.get_batch_by_id(existente.import_batch_id)
-            data_referencia_anterior = lote_anterior.data_referencia if lote_anterior else existente.data
-            if data_referencia_anterior != data_referencia_novo or existente.data != pedido.data:
-                divergencias.append(
-                    PedidoDivergencia(
-                        loja=pedido.loja,
-                        pedido=pedido.pedido,
-                        data_anterior=existente.data,
-                        data_nova=pedido.data,
-                        batch_anterior_id=existente.import_batch_id,
-                        batch_novo_id=batch_novo_id,
-                    )
-                )
-            self.repository.delete_pedido_por_chave(pedido.loja, pedido.pedido)
-        return divergencias
 
     @staticmethod
     def _montar_pedidos(rows: list[dict[str, str]], batch_id: int) -> list[Pedido]:

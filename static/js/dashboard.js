@@ -277,7 +277,6 @@
 
     document.getElementById("kpi-auditoria-total").textContent = numero(data.auditoria_resumo.total_pedidos);
     document.getElementById("kpi-auditoria-valor").textContent = moeda(data.auditoria_resumo.valor_desconto_total);
-    document.getElementById("kpi-divergencias").textContent = numero(data.divergencias_total);
 
     renderBar(
       "chart-auditoria-vendedor",
