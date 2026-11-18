@@ -1,6 +1,7 @@
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Request, UploadFile
+from fastapi import APIRouter, Depends, File, Request, UploadFile, status
+from fastapi.responses import RedirectResponse
 
 from app.shared.security.security import get_current_user
 from app.shared.templates import templates
@@ -50,3 +51,12 @@ def import_submit(
         {"batches": batches, "resultado": resultado, "erro": erro, "current_user": current_user},
         status_code=status_code,
     )
+
+
+@router.post("/{batch_id}/excluir")
+def excluir_batch(
+    batch_id: int,
+    repository: RepositoryVendas = Depends(get_repository_vendas),
+):
+    repository.delete_batch_data(batch_id)
+    return RedirectResponse(url="/importar", status_code=status.HTTP_303_SEE_OTHER)

@@ -45,6 +45,7 @@
         <th>Pagamentos</th>
         <th>Itens</th>
         <th>Importado em</th>
+        <th>Acoes</th>
       </tr>
     </thead>
     <tbody>
@@ -55,9 +56,14 @@
         <td data-label="Pagamentos">{{ batch.total_pagamentos }}</td>
         <td data-label="Itens">{{ batch.total_itens }}</td>
         <td data-label="Importado em">{{ batch.importado_em }}</td>
+        <td data-label="Acoes">
+          <form method="post" action="/importar/{{ batch.id }}/excluir" onsubmit="return confirm('Excluir a importacao de {{ batch.data_referencia }}? Isso apaga os pedidos, pagamentos e itens desse lote, permitindo reimportar o dia.');">
+            <button type="submit" class="secondary">Excluir</button>
+          </form>
+        </td>
       </tr>
       {% else %}
-      <tr><td colspan="5" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>
+      <tr><td colspan="6" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>
       {% endfor %}
     </tbody>
   </table>

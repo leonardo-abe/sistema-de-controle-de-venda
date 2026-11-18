@@ -52,6 +52,8 @@ class ServiceImport:
         datas_encontradas = Counter(parse_data(row["Data"]) for row in pedidos_rows if row.get("Data"))
         data_referencia = datas_encontradas.most_common(1)[0][0] if datas_encontradas else data_pedidos
 
+        self._validar_conflitos_de_pedido(pedidos_rows, data_referencia)
+
         substituiu = False
         batch_existente = self.repository.get_batch_by_data(data_referencia)
         if batch_existente is not None:
@@ -89,6 +91,46 @@ class ServiceImport:
             importado_em=batch.importado_em,
             substituiu_batch_anterior=substituiu,
         )
+
+    def _validar_conflitos_de_pedido(self, pedidos_rows: list[dict[str, str]], data_referencia_novo) -> None:
+        # Um pedido e unico por (loja, pedido), independente de data. Se o
+        # arquivo traz um pedido que ja existe no banco, arquivado num lote de
+        # uma data diferente da que esta sendo importada agora (ex.: uma
+        # exportacao anterior incluiu, por engano, um pedido do dia errado),
+        # a importacao inteira e rejeitada antes de gravar qualquer coisa,
+        # com uma mensagem dizendo qual pedido e quais as duas datas em
+        # conflito.
+        conflitos = []
+        vistos: set[tuple[int, int]] = set()
+        for row in pedidos_rows:
+            if not row.get("Pedido"):
+                continue
+            loja = parse_int(row.get("Loja"))
+            pedido = parse_int(row.get("Pedido"))
+            if (loja, pedido) in vistos:
+                continue
+            vistos.add((loja, pedido))
+
+            existente = self.repository.get_pedido_por_chave(loja, pedido)
+            if existente is None:
+                continue
+
+            lote_anterior = self.repository.get_batch_by_id(existente.import_batch_id)
+            data_anterior = lote_anterior.data_referencia if lote_anterior else existente.data
+            if data_anterior != data_referencia_novo:
+                conflitos.append(
+                    f"pedido {pedido} (loja {loja}): ja importado no lote do dia {data_anterior}, este arquivo e do dia {data_referencia_novo}"
+                )
+
+        if conflitos:
+            limite = 10
+            detalhe = "; ".join(conflitos[:limite])
+            if len(conflitos) > limite:
+                detalhe += f"; e mais {len(conflitos) - limite} pedido(s)"
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail=f"Importacao cancelada: {len(conflitos)} pedido(s) com divergencia de data - {detalhe}.",
+            )
 
     @staticmethod
     def _montar_pedidos(rows: list[dict[str, str]], batch_id: int) -> list[Pedido]:

@@ -22,6 +22,14 @@ class RepositoryVendas:
         self.session.execute(delete(ImportBatch).where(ImportBatch.id == batch_id))
         self.session.commit()
 
+    def get_pedido_por_chave(self, loja: int, pedido: int) -> Pedido | None:
+        stmt = select(Pedido).where(Pedido.loja == loja, Pedido.pedido == pedido)
+        return self.session.execute(stmt).scalar_one_or_none()
+
+    def get_batch_by_id(self, batch_id: int) -> ImportBatch | None:
+        stmt = select(ImportBatch).where(ImportBatch.id == batch_id)
+        return self.session.execute(stmt).scalar_one_or_none()
+
     def create_batch(self, batch: ImportBatch) -> ImportBatch:
         self.session.add(batch)
         self.session.commit()
