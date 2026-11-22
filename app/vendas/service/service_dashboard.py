@@ -146,6 +146,16 @@ class ServiceDashboard:
         rows = self.session.execute(stmt).all()
         return [SeriePontoSchema(chave=nome, valor=round(valor, 2)) for nome, valor in rows]
 
+    def vendas_por_loja(self, f: FiltrosDashboard) -> list[SeriePontoSchema]:
+        stmt = (
+            select(Pedido.loja, func.coalesce(func.sum(Pedido.valor_liquido), 0.0))
+            .group_by(Pedido.loja)
+            .order_by(func.sum(Pedido.valor_liquido).desc())
+        )
+        stmt = self._aplicar_filtros_pedido(stmt, f)
+        rows = self.session.execute(stmt).all()
+        return [SeriePontoSchema(chave=f"Loja {loja}", valor=round(valor, 2)) for loja, valor in rows]
+
     def formas_pagamento(self, f: FiltrosDashboard) -> list[SeriePontoSchema]:
         stmt = (
             select(Pagamento.tipo_pagamento, func.coalesce(func.sum(Pagamento.valor), 0.0))

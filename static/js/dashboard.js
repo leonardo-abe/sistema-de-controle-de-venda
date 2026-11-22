@@ -249,6 +249,19 @@
       { horizontal: true, colorIndex: 0 }
     );
 
+    const cardRankingLoja = document.getElementById("card-ranking-loja");
+    if (!params.loja) {
+      cardRankingLoja.classList.remove("hidden");
+      renderBar(
+        "chart-loja",
+        data.vendas_por_loja.map((p) => p.chave),
+        data.vendas_por_loja.map((p) => p.valor),
+        { horizontal: true, colorIndex: 7 }
+      );
+    } else {
+      cardRankingLoja.classList.add("hidden");
+    }
+
     renderBar(
       "chart-produtos",
       data.top_produtos.map((p) => p.chave),

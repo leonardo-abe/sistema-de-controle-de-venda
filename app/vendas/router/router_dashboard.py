@@ -66,6 +66,7 @@ def api_resumo(
         "kpis_anterior": kpis_anterior,
         "vendas_por_dia": service.vendas_por_dia(filtros),
         "vendas_por_vendedor": service.vendas_por_vendedor(filtros),
+        "vendas_por_loja": service.vendas_por_loja(filtros),
         "formas_pagamento": service.formas_pagamento(filtros),
         "top_produtos": service.top_produtos(filtros),
         "top_grupos": service.top_grupos(filtros),

@@ -608,6 +608,10 @@ th {
   color: var(--critical);
 }
 
+.hidden {
+  display: none !important;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {
