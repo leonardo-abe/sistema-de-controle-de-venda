@@ -197,6 +197,8 @@ class ServiceImport:
                     secao=clean_str(row.get("Secao")),
                 )
 
+            quantidade = parse_decimal(row.get("Quantidade"))
+            custo_unitario = parse_decimal(row.get("Custo"))
             itens.append(
                 ItemVenda(
                     loja=parse_int(row.get("Loja")),
@@ -204,11 +206,15 @@ class ServiceImport:
                     data=parse_data(row["Data"]),
                     hora=parse_hora(row["Hora"]),
                     cod_prod=cod_prod,
-                    quantidade=parse_decimal(row.get("Quantidade")),
+                    quantidade=quantidade,
                     unidade=clean_str(row.get("Unidade")),
                     valor_unitario=parse_decimal(row.get("Valor Unitario")),
                     valor_total=parse_decimal(row.get("Valor Total")),
-                    custo=parse_decimal(row.get("Custo")),
+                    # "Custo" no CSV e o custo por unidade, nao o custo total
+                    # da linha (diferente de "Valor Unitario"/"Valor Total",
+                    # que ja vem o par unitario/total). Convertemos aqui pra
+                    # custo total da linha, consistente com valor_total.
+                    custo=round(custo_unitario * quantidade, 2),
                     import_batch_id=batch_id,
                 )
             )
