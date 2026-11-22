@@ -63,7 +63,9 @@ class ServiceImport:
         pedidos_rows_ok = [r for r in pedidos_rows if self._chave(r) not in chaves_pendentes]
         pagamentos_rows_ok = [r for r in pagamentos_rows if self._chave(r) not in chaves_pendentes]
 
-        pedidos_removidos = self.repository.delete_dados_por_lojas_e_data(lojas_no_arquivo, data_referencia)
+        pedidos_removidos = self.repository.delete_dados_por_lojas_e_data(
+            lojas_no_arquivo, data_referencia, chaves_pendentes
+        )
         substituiu = pedidos_removidos > 0
 
         batch = self.repository.create_batch(
@@ -271,6 +273,16 @@ class ServiceImport:
         # para revisar: fica como ja estava, sem pendencia. O resto do
         # arquivo (e as reimportacoes normais do mesmo dia) seguem
         # substituindo direto, sem essa checagem extra.
+        #
+        # Importante: alem de comparar com a data_referencia_novo (majoritaria
+        # do arquivo), tambem validamos a data PROPRIA de cada linha. Um
+        # arquivo pode trazer, isolado, um pedido de um dia diferente da
+        # maioria - se so olhassemos a data do arquivo, esse caso passaria
+        # batido (foi exatamente isso que causou o bug original de pedido
+        # gravado com o lote errado). So tratamos como "reimportacao normal
+        # do mesmo dia" (sem checagem nenhuma) quando TODO MUNDO concorda
+        # sobre a data: o que ja esta salvo, a data do lote e a propria
+        # linha do arquivo.
         chaves: set[tuple[int, int]] = set()
         pendencias: list[PedidoPendente] = []
         vistos: set[tuple[int, int]] = set()
@@ -284,17 +296,29 @@ class ServiceImport:
             loja, pedido = chave
 
             existente = self.repository.get_pedido_por_chave(loja, pedido)
-            if existente is None or existente.data == data_referencia_novo:
+            if existente is None:
                 continue
 
-            if self._pedido_identico(existente, row):
-                # mesma venda reexportada sob outra data de lote - nada a
-                # fazer, mas exclui do insert normal para nao duplicar nem
-                # mexer no que ja esta correto.
-                chaves.add(chave)
+            try:
+                data_propria_linha = parse_data(row["Data"]) if row.get("Data") else None
+            except ValueError:
+                data_propria_linha = None
+
+            if existente.data == data_referencia_novo and data_propria_linha == data_referencia_novo:
+                # reimportacao normal do mesmo dia: nada diverge, segue o
+                # fluxo normal de substituicao (apaga e recria), sem checagem.
                 continue
 
+            # Ha uma divergencia de data em algum ponto (o que ja esta salvo
+            # e/ou a propria linha nao batem com a data do lote). O pedido
+            # existente nao sera necessariamente apagado pela substituicao
+            # escopada por data_referencia, entao precisa ficar de fora do
+            # insert normal para nao duplicar - e so vira pendencia de
+            # revisao manual se o CONTEUDO tambem for diferente.
             chaves.add(chave)
+            if self._pedido_identico(existente, row):
+                continue
+
             itens_rows = [r for r in produtos_rows if self._chave(r) == chave and r.get("Cod Prod")]
             pagamentos_rows_pedido = [r for r in pagamentos_rows if self._chave(r) == chave]
             pendencias.append(
@@ -302,7 +326,7 @@ class ServiceImport:
                     loja=loja,
                     pedido=pedido,
                     data_existente=existente.data,
-                    data_nova=data_referencia_novo,
+                    data_nova=data_propria_linha or data_referencia_novo,
                     lote_novo_id=0,
                     pedido_row_json=json.dumps(row),
                     itens_rows_json=json.dumps(itens_rows),

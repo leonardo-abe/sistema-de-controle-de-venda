@@ -1,6 +1,6 @@
 from datetime import date, datetime
 
-from sqlalchemy import delete, func, select
+from sqlalchemy import delete, func, select, tuple_
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session
 
@@ -18,24 +18,46 @@ class RepositoryVendas:
         self.session.execute(delete(ImportBatch).where(ImportBatch.id == batch_id))
         self.session.commit()
 
-    def delete_dados_por_lojas_e_data(self, lojas: list[int], data_referencia: date) -> int:
+    def delete_dados_por_lojas_e_data(
+        self,
+        lojas: list[int],
+        data_referencia: date,
+        chaves_pendentes: set[tuple[int, int]] | None = None,
+    ) -> int:
         # Substitui dados existentes dessas lojas, nessa data, antes de uma
         # reimportacao - escopado por loja (nao pelo dia inteiro), para que
         # reimportar a filial 2 nao apague a filial 1 do mesmo dia.
+        # Pedidos que ficaram em pendencia de revisao manual sao excluidos
+        # dessa substituicao: eles nao foram reinseridos pelo novo arquivo
+        # (ficaram fora do insert ate alguem resolver a pendencia), entao
+        # apaga-los aqui faria a venda ja existente sumir do banco.
         if not lojas:
             return 0
+        filtro_pendentes = tuple_(Pedido.loja, Pedido.pedido).notin_(list(chaves_pendentes)) if chaves_pendentes else True
         pedidos_afetados = self.session.execute(
             select(func.count())
             .select_from(Pedido)
-            .where(Pedido.loja.in_(lojas), Pedido.data == data_referencia)
+            .where(Pedido.loja.in_(lojas), Pedido.data == data_referencia, filtro_pendentes)
         ).scalar_one()
-        self.session.execute(
-            delete(ItemVenda).where(ItemVenda.loja.in_(lojas), ItemVenda.data == data_referencia)
+        filtro_pendentes_item = (
+            tuple_(ItemVenda.loja, ItemVenda.pedido).notin_(list(chaves_pendentes)) if chaves_pendentes else True
+        )
+        filtro_pendentes_pagto = (
+            tuple_(Pagamento.loja, Pagamento.pedido).notin_(list(chaves_pendentes)) if chaves_pendentes else True
         )
         self.session.execute(
-            delete(Pagamento).where(Pagamento.loja.in_(lojas), Pagamento.data == data_referencia)
+            delete(ItemVenda).where(
+                ItemVenda.loja.in_(lojas), ItemVenda.data == data_referencia, filtro_pendentes_item
+            )
         )
-        self.session.execute(delete(Pedido).where(Pedido.loja.in_(lojas), Pedido.data == data_referencia))
+        self.session.execute(
+            delete(Pagamento).where(
+                Pagamento.loja.in_(lojas), Pagamento.data == data_referencia, filtro_pendentes_pagto
+            )
+        )
+        self.session.execute(
+            delete(Pedido).where(Pedido.loja.in_(lojas), Pedido.data == data_referencia, filtro_pendentes)
+        )
         self.session.commit()
         return pedidos_afetados
 
