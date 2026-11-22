@@ -19,7 +19,7 @@ from app.infra.db.sqlite import Base, SessionLocal, engine
 from app.shared.security.security import hash_password
 from app.shared.settings import settings
 from app.vendas import router_clientes, router_dashboard, router_import, router_pedidos, router_produtos
-from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, Produto  # noqa: F401
+from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, PedidoPendente, Produto  # noqa: F401
 
 
 def seed_admin_user() -> None:

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Pendencias de importacao - Deposito Baratao{% endblock %}
+{% block page_title %}Pendencias de importacao{% endblock %}
+{% block content %}
+<p style="color: var(--text-secondary); max-width: 700px; margin-top: 0;">
+  Esses pedidos ja existiam no sistema com uma data diferente da que veio na ultima importacao.
+  Nenhuma das duas versoes foi apagada - compare os dados abaixo (as diferencas aparecem destacadas)
+  e escolha qual fica valendo.
+</p>
+
+{% if not comparacoes %}
+<div class="card" style="color: var(--text-muted);">Nenhuma pendencia no momento.</div>
+{% endif %}
+
+{% for c in comparacoes %}
+<div class="card" style="margin-bottom: 24px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px; margin-bottom: 16px;">
+    <h3 style="margin: 0; color: var(--brand-navy);">Pedido {{ c.pendencia.pedido }} (loja {{ c.pendencia.loja }})</h3>
+    <span class="diff-tag">detectado em {{ c.pendencia.criado_em }}</span>
+  </div>
+
+  <div class="table-scroll" style="margin-bottom: 16px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Campo</th>
+          <th>Ja no sistema ({{ c.pendencia.data_existente }})</th>
+          <th>Nesse arquivo ({{ c.pendencia.data_nova }})</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for campo in c.pedido %}
+        <tr class="{{ 'diff-linha' if campo.diferente else '' }}">
+          <td data-label="Campo">{{ campo.campo }}</td>
+          <td data-label="Ja no sistema">{{ campo.antigo if campo.antigo is not none else '-' }}</td>
+          <td data-label="Nesse arquivo">{{ campo.novo if campo.novo is not none else '-' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">Itens</p>
+  <div class="table-scroll" style="margin-bottom: 16px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Produto</th>
+          <th>Qtd / Valor - ja no sistema</th>
+          <th>Qtd / Valor - nesse arquivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in c.itens %}
+        <tr class="{{ 'diff-linha' if item.diferente else '' }}">
+          <td data-label="Produto">
+            {{ item.produto }}
+            {% if item.so_no_antigo %}<span class="diff-tag">so na versao antiga</span>{% endif %}
+            {% if item.so_no_novo %}<span class="diff-tag">so na versao nova</span>{% endif %}
+          </td>
+          <td data-label="Ja no sistema">
+            {% if item.antigo %}{{ item.antigo.quantidade }} {{ item.antigo.unidade or '' }} - {{ item.antigo.valor_total|moeda }}{% else %}-{% endif %}
+          </td>
+          <td data-label="Nesse arquivo">
+            {% if item.novo %}{{ item.novo.quantidade }} {{ item.novo.unidade or '' }} - {{ item.novo.valor_total|moeda }}{% else %}-{% endif %}
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color: var(--text-muted);">Nenhum item.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 4px;">Pagamentos</p>
+  <div class="table-scroll" style="margin-bottom: 20px;">
+    <table>
+      <thead>
+        <tr>
+          <th>Forma</th>
+          <th>Valor - ja no sistema</th>
+          <th>Valor - nesse arquivo</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pagamento in c.pagamentos %}
+        <tr class="{{ 'diff-linha' if pagamento.diferente else '' }}">
+          <td data-label="Forma">{{ pagamento.tipo_pagamento }}</td>
+          <td data-label="Ja no sistema">{{ pagamento.antigo.valor|moeda if pagamento.antigo else '-' }}</td>
+          <td data-label="Nesse arquivo">{{ pagamento.novo.valor|moeda if pagamento.novo else '-' }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="3" style="color: var(--text-muted);">Nenhum pagamento.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div style="display:flex; gap:12px; flex-wrap:wrap;">
+    <form method="post" action="/importar/pendencias/{{ c.pendencia.id }}/resolver" onsubmit="return confirm('Manter a versao de {{ c.pendencia.data_existente }} e descartar a nova?');">
+      <input type="hidden" name="usar_novo" value="false" />
+      <button type="submit" class="secondary">Manter versao de {{ c.pendencia.data_existente }}</button>
+    </form>
+    <form method="post" action="/importar/pendencias/{{ c.pendencia.id }}/resolver" onsubmit="return confirm('Usar a versao de {{ c.pendencia.data_nova }} e substituir a que ja estava no sistema?');">
+      <input type="hidden" name="usar_novo" value="true" />
+      <button type="submit">Usar versao de {{ c.pendencia.data_nova }}</button>
+    </form>
+  </div>
+</div>
+{% endfor %}
+{% endblock %}

@@ -1,7 +1,7 @@
 from datetime import date as date_type
 from datetime import datetime, time
 
-from sqlalchemy import Date, DateTime, ForeignKeyConstraint, String, Time, UniqueConstraint, func
+from sqlalchemy import Boolean, Date, DateTime, ForeignKeyConstraint, String, Text, Time, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.infra.db.sqlite import Base
@@ -41,6 +41,24 @@ class Pedido(Base):
     valor_liquido: Mapped[float] = mapped_column(default=0)
     situacao: Mapped[str | None] = mapped_column(String(50))
     import_batch_id: Mapped[int] = mapped_column(index=True)
+
+
+class PedidoPendente(Base):
+    __tablename__ = "pedidos_pendentes"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    loja: Mapped[int]
+    pedido: Mapped[int] = mapped_column(index=True)
+    data_existente: Mapped[date_type] = mapped_column(Date)
+    data_nova: Mapped[date_type] = mapped_column(Date)
+    lote_novo_id: Mapped[int]
+    pedido_row_json: Mapped[str] = mapped_column(Text)
+    itens_rows_json: Mapped[str] = mapped_column(Text)
+    pagamentos_rows_json: Mapped[str] = mapped_column(Text)
+    criado_em: Mapped[datetime] = mapped_column(DateTime, server_default=func.now())
+    resolvido: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
+    resolvido_em: Mapped[datetime | None] = mapped_column(DateTime, default=None)
+    resolucao: Mapped[str | None] = mapped_column(String(20), default=None)
 
 
 class Pagamento(Base):

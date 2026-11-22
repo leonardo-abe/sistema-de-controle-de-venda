@@ -11,6 +11,7 @@ class ImportResultSchema(BaseModel):
     total_itens: int
     importado_em: datetime
     substituiu_batch_anterior: bool
+    total_pendencias: int = 0
 
 
 class ImportBatchSchema(BaseModel):

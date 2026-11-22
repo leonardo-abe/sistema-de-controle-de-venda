@@ -17,4 +17,13 @@ def static_url(path: str) -> str:
     return f"/static/{path}?v={version}"
 
 
+def moeda(valor) -> str:
+    if valor is None:
+        return "-"
+    texto = f"{valor:,.2f}"
+    texto = texto.replace(",", "_").replace(".", ",").replace("_", ".")
+    return f"R$ {texto}"
+
+
 templates.env.globals["static_url"] = static_url
+templates.env.filters["moeda"] = moeda

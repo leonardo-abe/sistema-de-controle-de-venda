@@ -18,6 +18,17 @@
   Importacao concluida para a(s) loja(s) {{ resultado.lojas }} em {{ resultado.data_referencia }}:
   {{ resultado.total_pedidos }} pedidos, {{ resultado.total_pagamentos }} pagamentos, {{ resultado.total_itens }} itens.
   {% if resultado.substituiu_batch_anterior %}(dados anteriores dessa(s) loja(s) nessa data foram substituidos){% endif %}
+  {% if resultado.total_pendencias %}
+  <br />{{ resultado.total_pendencias }} pedido(s) ja existiam com outra data e ficaram pendentes de revisao -
+  <a href="/importar/pendencias" class="table-link">ver pendencias</a>.
+  {% endif %}
+</div>
+{% endif %}
+
+{% if total_pendencias %}
+<div class="alert alert-error">
+  {{ total_pendencias }} pedido(s) pendente(s) de revisao -
+  <a href="/importar/pendencias" class="table-link">ver pendencias</a>.
 </div>
 {% endif %}
 

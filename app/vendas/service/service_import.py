@@ -1,10 +1,11 @@
+import json
 from collections import Counter
 
 from fastapi import HTTPException, UploadFile, status
 
 from app.vendas.dto.import_dto import ImportResultSchema
 from app.vendas.interface.irepository_vendas import VendasRepositoryProtocol
-from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, Produto
+from app.vendas.models import ImportBatch, ItemVenda, Pagamento, Pedido, PedidoPendente, Produto
 from app.vendas.service.csv_parsing import (
     CsvValidationError,
     PAGAMENTOS_PATTERN,
@@ -52,12 +53,15 @@ class ServiceImport:
         datas_encontradas = Counter(parse_data(row["Data"]) for row in pedidos_rows if row.get("Data"))
         data_referencia = datas_encontradas.most_common(1)[0][0] if datas_encontradas else data_pedidos
 
-        # As lojas desse arquivo: a substituicao/conflito e escopado por
-        # loja+dia, nao pelo dia inteiro - importar a filial 2 nao pode
-        # apagar a filial 1 do mesmo dia.
+        # As lojas desse arquivo: a substituicao e escopada por loja+dia, nao
+        # pelo dia inteiro - importar a filial 2 nao pode apagar a filial 1
+        # do mesmo dia.
         lojas_no_arquivo = sorted({parse_int(row.get("Loja")) for row in pedidos_rows if row.get("Pedido")})
 
-        self._validar_conflitos_de_pedido(pedidos_rows, data_referencia)
+        chaves_pendentes, pendencias = self._detectar_pendencias(pedidos_rows, pagamentos_rows, produtos_rows, data_referencia)
+
+        pedidos_rows_ok = [r for r in pedidos_rows if self._chave(r) not in chaves_pendentes]
+        pagamentos_rows_ok = [r for r in pagamentos_rows if self._chave(r) not in chaves_pendentes]
 
         pedidos_removidos = self.repository.delete_dados_por_lojas_e_data(lojas_no_arquivo, data_referencia)
         substituiu = pedidos_removidos > 0
@@ -72,14 +76,22 @@ class ServiceImport:
             )
         )
 
-        pedidos = self._montar_pedidos(pedidos_rows, batch.id)
-        pagamentos = self._montar_pagamentos(pagamentos_rows, batch.id)
-        produtos, itens = self._montar_produtos_e_itens(produtos_rows, batch.id)
+        pedidos = self._montar_pedidos(pedidos_rows_ok, batch.id)
+        pagamentos = self._montar_pagamentos(pagamentos_rows_ok, batch.id)
+        # O catalogo de produtos e atualizado com TODAS as linhas (inclusive
+        # as pendentes), ja que e so um cadastro compartilhado; os itens de
+        # venda em si ficam de fora enquanto o pedido estiver pendente.
+        produtos, itens_todos = self._montar_produtos_e_itens(produtos_rows, batch.id)
+        itens = [item for item in itens_todos if (item.loja, item.pedido) not in chaves_pendentes]
 
         self.repository.bulk_insert_pedidos(pedidos)
         self.repository.upsert_produtos(produtos)
         self.repository.bulk_insert_pagamentos(pagamentos)
         self.repository.bulk_insert_itens(itens)
+
+        for pendencia in pendencias:
+            pendencia.lote_novo_id = batch.id
+        self.repository.criar_pendencias(pendencias)
 
         batch.total_pedidos = len(pedidos)
         batch.total_pagamentos = len(pagamentos)
@@ -94,42 +106,181 @@ class ServiceImport:
             total_itens=len(itens),
             importado_em=batch.importado_em,
             substituiu_batch_anterior=substituiu,
+            total_pendencias=len(pendencias),
         )
 
-    def _validar_conflitos_de_pedido(self, pedidos_rows: list[dict[str, str]], data_referencia_novo) -> None:
+    def resolver_pendencia(self, pendencia_id: int, usar_novo: bool) -> None:
+        pendencia = self.repository.get_pendencia(pendencia_id)
+        if pendencia is None:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Pendencia nao encontrada")
+        if pendencia.resolvido:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Essa pendencia ja foi resolvida")
+
+        if usar_novo:
+            self.repository.delete_pedido_exato(pendencia.loja, pendencia.pedido, pendencia.data_existente)
+            pedido_row = json.loads(pendencia.pedido_row_json)
+            itens_rows = json.loads(pendencia.itens_rows_json)
+            pagamentos_rows = json.loads(pendencia.pagamentos_rows_json)
+
+            pedidos = self._montar_pedidos([pedido_row], pendencia.lote_novo_id)
+            pagamentos = self._montar_pagamentos(pagamentos_rows, pendencia.lote_novo_id)
+            _, itens = self._montar_produtos_e_itens(itens_rows, pendencia.lote_novo_id)
+
+            self.repository.bulk_insert_pedidos(pedidos)
+            self.repository.bulk_insert_pagamentos(pagamentos)
+            self.repository.bulk_insert_itens(itens)
+
+        self.repository.marcar_pendencia_resolvida(pendencia_id, "usou_novo" if usar_novo else "manteve_antigo")
+
+    def montar_comparacao(self, pendencia: PedidoPendente) -> dict:
+        existente_pedido = self.repository.get_pedido_por_chave_e_data(
+            pendencia.loja, pendencia.pedido, pendencia.data_existente
+        )
+        existente_itens = self.repository.list_itens(pendencia.loja, pendencia.pedido, pendencia.data_existente)
+        existente_pagamentos = self.repository.list_pagamentos(
+            pendencia.loja, pendencia.pedido, pendencia.data_existente
+        )
+
+        pedido_row = json.loads(pendencia.pedido_row_json)
+        itens_rows = json.loads(pendencia.itens_rows_json)
+        pagamentos_rows = json.loads(pendencia.pagamentos_rows_json)
+        novo_pedido = self._montar_pedidos([pedido_row], 0)[0] if pedido_row else None
+        novo_pagamentos = self._montar_pagamentos(pagamentos_rows, 0)
+        _, novo_itens = self._montar_produtos_e_itens(itens_rows, 0)
+
+        codigos = {i.cod_prod for i in existente_itens} | {i.cod_prod for i in novo_itens}
+        produtos_por_codigo = self.repository.get_produtos_por_codigos(list(codigos))
+
+        campos_pedido = [
+            ("data", "Data"),
+            ("hora", "Hora"),
+            ("cliente", "Cliente"),
+            ("vendedor", "Vendedor"),
+            ("cidade", "Cidade"),
+            ("bairro", "Bairro"),
+            ("total", "Total"),
+            ("perc_desconto", "% Desconto"),
+            ("valor_desconto", "Valor desconto"),
+            ("valor_liquido", "Valor liquido"),
+            ("situacao", "Situacao"),
+        ]
+        diffs_pedido = [
+            {
+                "campo": label,
+                "antigo": getattr(existente_pedido, chave) if existente_pedido else None,
+                "novo": getattr(novo_pedido, chave) if novo_pedido else None,
+                "diferente": (getattr(existente_pedido, chave) if existente_pedido else None)
+                != (getattr(novo_pedido, chave) if novo_pedido else None),
+            }
+            for chave, label in campos_pedido
+        ]
+
+        def nome_produto(cod_prod: int) -> str:
+            produto = produtos_por_codigo.get(cod_prod)
+            return produto.nome if produto else f"PRODUTO {cod_prod}"
+
+        itens_por_codigo: dict[int, dict] = {}
+        for item in existente_itens:
+            itens_por_codigo.setdefault(item.cod_prod, {})["antigo"] = item
+        for item in novo_itens:
+            itens_por_codigo.setdefault(item.cod_prod, {})["novo"] = item
+
+        diffs_itens = []
+        for cod_prod, versoes in sorted(itens_por_codigo.items()):
+            antigo = versoes.get("antigo")
+            novo = versoes.get("novo")
+            diffs_itens.append(
+                {
+                    "cod_prod": cod_prod,
+                    "produto": nome_produto(cod_prod),
+                    "antigo": antigo,
+                    "novo": novo,
+                    "so_no_antigo": antigo is not None and novo is None,
+                    "so_no_novo": novo is not None and antigo is None,
+                    "diferente": antigo is not None
+                    and novo is not None
+                    and (antigo.quantidade != novo.quantidade or antigo.valor_total != novo.valor_total),
+                }
+            )
+
+        pagamentos_por_tipo: dict[str, dict] = {}
+        for pagamento in existente_pagamentos:
+            pagamentos_por_tipo.setdefault(pagamento.tipo_pagamento, {})["antigo"] = pagamento
+        for pagamento in novo_pagamentos:
+            pagamentos_por_tipo.setdefault(pagamento.tipo_pagamento, {})["novo"] = pagamento
+
+        diffs_pagamentos = []
+        for tipo, versoes in sorted(pagamentos_por_tipo.items()):
+            antigo = versoes.get("antigo")
+            novo = versoes.get("novo")
+            diffs_pagamentos.append(
+                {
+                    "tipo_pagamento": tipo,
+                    "antigo": antigo,
+                    "novo": novo,
+                    "diferente": antigo is not None and novo is not None and antigo.valor != novo.valor,
+                }
+            )
+
+        return {
+            "pendencia": pendencia,
+            "pedido": diffs_pedido,
+            "itens": diffs_itens,
+            "pagamentos": diffs_pagamentos,
+        }
+
+    @staticmethod
+    def _chave(row: dict[str, str]) -> tuple[int, int]:
+        return (parse_int(row.get("Loja")), parse_int(row.get("Pedido")))
+
+    def _detectar_pendencias(
+        self,
+        pedidos_rows: list[dict[str, str]],
+        pagamentos_rows: list[dict[str, str]],
+        produtos_rows: list[dict[str, str]],
+        data_referencia_novo,
+    ) -> tuple[set[tuple[int, int]], list[PedidoPendente]]:
         # Um pedido e unico por (loja, pedido), independente de data. Se o
         # arquivo traz um pedido que ja existe no banco numa data diferente
         # da que esta sendo importada agora (ex.: uma exportacao anterior
-        # incluiu, por engano, um pedido do dia errado), a importacao inteira
-        # e rejeitada antes de gravar qualquer coisa, com uma mensagem
-        # dizendo qual pedido e quais as duas datas em conflito. Pedidos da
-        # mesma loja e mesma data sao normais (serao substituidos).
-        conflitos = []
+        # incluiu, por engano, um pedido do dia errado - ou o cliente mesmo
+        # confirma que isso acontece com alguma frequencia), ele NAO e
+        # inserido nem substituido automaticamente: fica pendente de revisao
+        # manual numa tela propria, com as duas versoes lado a lado. O resto
+        # do arquivo e importado normalmente.
+        chaves: set[tuple[int, int]] = set()
+        pendencias: list[PedidoPendente] = []
         vistos: set[tuple[int, int]] = set()
         for row in pedidos_rows:
             if not row.get("Pedido"):
                 continue
-            loja = parse_int(row.get("Loja"))
-            pedido = parse_int(row.get("Pedido"))
-            if (loja, pedido) in vistos:
+            chave = self._chave(row)
+            if chave in vistos:
                 continue
-            vistos.add((loja, pedido))
+            vistos.add(chave)
+            loja, pedido = chave
 
             existente = self.repository.get_pedido_por_chave(loja, pedido)
-            if existente is not None and existente.data != data_referencia_novo:
-                conflitos.append(
-                    f"pedido {pedido} (loja {loja}): ja registrado em {existente.data}, este arquivo e do dia {data_referencia_novo}"
-                )
+            if existente is None or existente.data == data_referencia_novo:
+                continue
 
-        if conflitos:
-            limite = 10
-            detalhe = "; ".join(conflitos[:limite])
-            if len(conflitos) > limite:
-                detalhe += f"; e mais {len(conflitos) - limite} pedido(s)"
-            raise HTTPException(
-                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-                detail=f"Importacao cancelada: {len(conflitos)} pedido(s) com divergencia de data - {detalhe}.",
+            chaves.add(chave)
+            itens_rows = [r for r in produtos_rows if self._chave(r) == chave and r.get("Cod Prod")]
+            pagamentos_rows_pedido = [r for r in pagamentos_rows if self._chave(r) == chave]
+            pendencias.append(
+                PedidoPendente(
+                    loja=loja,
+                    pedido=pedido,
+                    data_existente=existente.data,
+                    data_nova=data_referencia_novo,
+                    lote_novo_id=0,
+                    pedido_row_json=json.dumps(row),
+                    itens_rows_json=json.dumps(itens_rows),
+                    pagamentos_rows_json=json.dumps(pagamentos_rows_pedido),
+                )
             )
+
+        return chaves, pendencias
 
     @staticmethod
     def _montar_pedidos(rows: list[dict[str, str]], batch_id: int) -> list[Pedido]:
