@@ -8,6 +8,7 @@ from app.vendas.dto.dashboard_dto import (
     AuditoriaResumoSchema,
     KpiResumoSchema,
     PedidoAuditoriaSchema,
+    ResumoImportacaoSchema,
     SerieDuplaSchema,
     SeriePontoSchema,
 )
@@ -126,6 +127,37 @@ class ServiceDashboard:
             custo_total=round(custo_total, 2),
             margem_bruta=round(margem_bruta, 2),
             margem_percentual=round(margem_percentual, 2),
+        )
+
+    def resumo_importacao(self, f: FiltrosDashboard) -> ResumoImportacaoSchema:
+        # Conferencia entre os 3 arquivos importados: a soma do valor dos
+        # itens (produtos) deveria bater com o total bruto dos pedidos
+        # (vendas), e o valor liquido dos pedidos deveria bater com a soma
+        # dos pagamentos. Qualquer diferenca indica dado faltando/duplicado
+        # em algum dos 3 arquivos.
+        stmt_itens = select(func.coalesce(func.sum(ItemVenda.valor_total), 0.0))
+        stmt_itens = self._aplicar_filtros_item(stmt_itens, f)
+        total_produtos = self.session.execute(stmt_itens).scalar_one()
+
+        stmt_pedidos = select(
+            func.coalesce(func.sum(Pedido.total), 0.0),
+            func.coalesce(func.sum(Pedido.valor_desconto), 0.0),
+            func.coalesce(func.sum(Pedido.valor_liquido), 0.0),
+        )
+        stmt_pedidos = self._aplicar_filtros_pedido(stmt_pedidos, f)
+        total_vendas_bruto, total_desconto, total_vendas_liquido = self.session.execute(stmt_pedidos).one()
+
+        stmt_pagamentos = select(func.coalesce(func.sum(Pagamento.valor), 0.0))
+        stmt_pagamentos = self._aplicar_filtros_pagamento(stmt_pagamentos, f)
+        total_pagamentos = self.session.execute(stmt_pagamentos).scalar_one()
+
+        return ResumoImportacaoSchema(
+            total_produtos=round(total_produtos, 2),
+            total_vendas_bruto=round(total_vendas_bruto, 2),
+            total_desconto=round(total_desconto, 2),
+            total_vendas_liquido=round(total_vendas_liquido, 2),
+            total_pagamentos=round(total_pagamentos, 2),
+            diferenca=round(total_vendas_liquido - total_pagamentos, 2),
         )
 
     def vendas_por_dia(self, f: FiltrosDashboard) -> list[SeriePontoSchema]:

@@ -236,6 +236,19 @@
     document.getElementById("kpi-margem").textContent = moeda(data.kpis.margem_bruta);
     document.getElementById("kpi-margem-percentual").textContent = `${data.kpis.margem_percentual.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}% de margem`;
 
+    const resumo = data.resumo_importacao;
+    document.getElementById("resumo-produtos").textContent = moeda(resumo.total_produtos);
+    document.getElementById("resumo-vendas-bruto").textContent = moeda(resumo.total_vendas_bruto);
+    document.getElementById("resumo-desconto").textContent = `-${moeda(resumo.total_desconto)}`;
+    document.getElementById("resumo-vendas-liquido").textContent = moeda(resumo.total_vendas_liquido);
+    document.getElementById("resumo-pagamentos").textContent = moeda(resumo.total_pagamentos);
+    const linhaDiferenca = document.querySelector(".resumo-diferenca");
+    const celulaDiferenca = document.getElementById("resumo-diferenca");
+    const diferencaOk = Math.abs(resumo.diferenca) < 0.01;
+    celulaDiferenca.textContent = diferencaOk ? moeda(0) : moeda(resumo.diferenca);
+    linhaDiferenca.classList.toggle("resumo-ok", diferencaOk);
+    linhaDiferenca.classList.toggle("resumo-alerta", !diferencaOk);
+
     renderTrend("kpi-pedidos-trend", data.kpis.total_pedidos, anterior && anterior.total_pedidos);
     renderTrend("kpi-valor-trend", data.kpis.valor_total_liquido, anterior && anterior.valor_total_liquido);
     renderTrend("kpi-ticket-trend", data.kpis.ticket_medio, anterior && anterior.ticket_medio);

@@ -30,6 +30,15 @@ class SerieDuplaSchema(BaseModel):
     valor_secundario: float = 0
 
 
+class ResumoImportacaoSchema(BaseModel):
+    total_produtos: float
+    total_vendas_bruto: float
+    total_desconto: float
+    total_vendas_liquido: float
+    total_pagamentos: float
+    diferenca: float
+
+
 class AuditoriaResumoSchema(BaseModel):
     total_pedidos: int
     valor_desconto_total: float

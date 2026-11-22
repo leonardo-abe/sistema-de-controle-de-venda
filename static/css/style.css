@@ -612,6 +612,50 @@ th {
   display: none !important;
 }
 
+.resumo-importacao {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.resumo-importacao th,
+.resumo-importacao td {
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--gridline);
+  text-align: left;
+  white-space: nowrap;
+}
+
+.resumo-importacao td:last-child {
+  text-align: right;
+  font-weight: 600;
+}
+
+.resumo-importacao tbody tr:nth-child(odd) {
+  background: var(--surface-2);
+}
+
+.resumo-diferenca td {
+  font-weight: 700;
+  border-bottom: none;
+}
+
+.resumo-diferenca.resumo-ok {
+  background: rgba(12, 163, 12, 0.12);
+}
+
+.resumo-diferenca.resumo-ok td:last-child {
+  color: var(--good);
+}
+
+.resumo-diferenca.resumo-alerta {
+  background: rgba(208, 59, 59, 0.12);
+}
+
+.resumo-diferenca.resumo-alerta td:last-child {
+  color: var(--critical);
+}
+
 .legenda-valores {
   width: 100%;
   border-collapse: collapse;
