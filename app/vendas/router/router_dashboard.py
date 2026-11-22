@@ -64,6 +64,7 @@ def api_resumo(
     return {
         "kpis": service.kpis(filtros),
         "resumo_importacao": service.resumo_importacao(filtros),
+        "pedidos_divergentes_produtos": service.pedidos_divergentes_produtos(filtros),
         "kpis_anterior": kpis_anterior,
         "vendas_por_dia": service.vendas_por_dia(filtros),
         "vendas_por_vendedor": service.vendas_por_vendedor(filtros),

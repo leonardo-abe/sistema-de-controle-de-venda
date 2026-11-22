@@ -110,7 +110,7 @@
   </div>
 </div>
 
-<div class="card" style="margin-bottom: 24px; max-width: 520px;">
+<div class="card" style="margin-bottom: 24px; max-width: 720px;">
   <p class="chart-title">Resumo da importacao</p>
   <table class="resumo-importacao">
     <thead>
@@ -160,6 +160,27 @@
       </tr>
     </tbody>
   </table>
+
+  <div class="hidden" id="bloco-divergencia-produtos" style="margin-top: 16px;">
+    <p style="font-size: 13px; color: var(--critical); font-weight: 600; margin-bottom: 8px;">
+      Pedidos onde o total da venda nao bate com a soma dos itens (produtos faltando/a mais no arquivo):
+    </p>
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Pedido</th>
+            <th>Data</th>
+            <th>Vendedor</th>
+            <th>Total venda</th>
+            <th>Soma itens</th>
+            <th>Diferenca</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-divergencia-produtos"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <div class="grid grid-charts">

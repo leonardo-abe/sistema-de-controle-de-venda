@@ -249,6 +249,23 @@
     linhaDiferenca.classList.toggle("resumo-ok", diferencaOk);
     linhaDiferenca.classList.toggle("resumo-alerta", !diferencaOk);
 
+    const divergentes = data.pedidos_divergentes_produtos;
+    const blocoDivergencia = document.getElementById("bloco-divergencia-produtos");
+    blocoDivergencia.classList.toggle("hidden", divergentes.length === 0);
+    document.getElementById("tabela-divergencia-produtos").innerHTML = divergentes
+      .map(
+        (p) => `
+      <tr>
+        <td data-label="Pedido"><a class="table-link" href="/pedidos/${p.loja}/${p.pedido}?data=${p.data}">${p.pedido}</a></td>
+        <td data-label="Data">${p.data}</td>
+        <td data-label="Vendedor">${escapeHtml(p.vendedor) || "-"}</td>
+        <td data-label="Total venda">${moeda(p.total_pedido)}</td>
+        <td data-label="Soma itens">${moeda(p.total_itens)}</td>
+        <td data-label="Diferenca" style="color: var(--critical); font-weight: 600;">${moeda(p.diferenca)}</td>
+      </tr>`
+      )
+      .join("");
+
     renderTrend("kpi-pedidos-trend", data.kpis.total_pedidos, anterior && anterior.total_pedidos);
     renderTrend("kpi-valor-trend", data.kpis.valor_total_liquido, anterior && anterior.valor_total_liquido);
     renderTrend("kpi-ticket-trend", data.kpis.ticket_medio, anterior && anterior.ticket_medio);

@@ -8,6 +8,7 @@ from app.vendas.dto.dashboard_dto import (
     AuditoriaResumoSchema,
     KpiResumoSchema,
     PedidoAuditoriaSchema,
+    PedidoDivergenciaProdutoSchema,
     ResumoImportacaoSchema,
     SerieDuplaSchema,
     SeriePontoSchema,
@@ -159,6 +160,41 @@ class ServiceDashboard:
             total_pagamentos=round(total_pagamentos, 2),
             diferenca=round(total_vendas_liquido - total_pagamentos, 2),
         )
+
+    def pedidos_divergentes_produtos(self, f: FiltrosDashboard) -> list[PedidoDivergenciaProdutoSchema]:
+        # Pedidos cujo total (arquivo de vendas) nao bate com a soma dos
+        # itens vendidos (arquivo de produtos) para o mesmo pedido - sinal
+        # de que o arquivo de produtos saiu incompleto/duplicado para
+        # aquele pedido especifico, mesmo que o pagamento tenha batido.
+        soma_itens = func.coalesce(func.sum(ItemVenda.valor_total), 0.0)
+        subq = (
+            select(ItemVenda.loja, ItemVenda.pedido, soma_itens.label("soma_itens"))
+            .group_by(ItemVenda.loja, ItemVenda.pedido)
+            .subquery()
+        )
+        stmt = select(Pedido, func.coalesce(subq.c.soma_itens, 0.0)).outerjoin(
+            subq, (subq.c.loja == Pedido.loja) & (subq.c.pedido == Pedido.pedido)
+        )
+        stmt = self._aplicar_filtros_pedido(stmt, f)
+        rows = self.session.execute(stmt).all()
+
+        divergentes = []
+        for pedido, total_itens in rows:
+            diferenca = round(pedido.total - total_itens, 2)
+            if abs(diferenca) > 0.01:
+                divergentes.append(
+                    PedidoDivergenciaProdutoSchema(
+                        loja=pedido.loja,
+                        pedido=pedido.pedido,
+                        data=pedido.data,
+                        vendedor=pedido.vendedor,
+                        total_pedido=round(pedido.total, 2),
+                        total_itens=round(total_itens, 2),
+                        diferenca=diferenca,
+                    )
+                )
+        divergentes.sort(key=lambda d: abs(d.diferenca), reverse=True)
+        return divergentes[:LIMITE_AUDITORIA]
 
     def vendas_por_dia(self, f: FiltrosDashboard) -> list[SeriePontoSchema]:
         stmt = select(Pedido.data, func.coalesce(func.sum(Pedido.valor_liquido), 0.0)).group_by(Pedido.data).order_by(Pedido.data)

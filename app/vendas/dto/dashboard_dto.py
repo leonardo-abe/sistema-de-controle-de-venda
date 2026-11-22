@@ -39,6 +39,16 @@ class ResumoImportacaoSchema(BaseModel):
     diferenca: float
 
 
+class PedidoDivergenciaProdutoSchema(BaseModel):
+    loja: int
+    pedido: int
+    data: date
+    vendedor: str | None
+    total_pedido: float
+    total_itens: float
+    diferenca: float
+
+
 class AuditoriaResumoSchema(BaseModel):
     total_pedidos: int
     valor_desconto_total: float
