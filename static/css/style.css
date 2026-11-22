@@ -612,6 +612,48 @@ th {
   display: none !important;
 }
 
+.legenda-valores {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.legenda-valores td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--gridline);
+  white-space: nowrap;
+}
+
+.legenda-valores td:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.legenda-valores td:last-child {
+  text-align: right;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.legenda-valores .legenda-cor {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legenda-valores tr.legenda-total {
+  background: var(--brand-navy);
+}
+
+.legenda-valores tr.legenda-total td {
+  color: white;
+  border-bottom: none;
+  font-weight: 700;
+}
+
 /* ---------- Modal ---------- */
 
 .modal-overlay {

@@ -103,7 +103,7 @@
     });
   }
 
-  function renderDoughnut(id, labels, data) {
+  function renderDoughnut(id, labels, data, { legendaId, legendaFormato = moeda } = {}) {
     const ctx = document.getElementById(id).getContext("2d");
     if (charts[id]) charts[id].destroy();
     charts[id] = new Chart(ctx, {
@@ -115,9 +115,23 @@
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: "bottom" } },
+        plugins: { legend: { display: !legendaId, position: "bottom" } },
       },
     });
+
+    if (!legendaId) return;
+    const tbody = document.querySelector(`#${legendaId} tbody`);
+    if (!tbody) return;
+    const total = data.reduce((soma, valor) => soma + valor, 0);
+    const linhas = labels.map(
+      (label, i) => `
+      <tr>
+        <td><span class="legenda-cor" style="background: ${palette[i % palette.length]};"></span>${escapeHtml(label)}</td>
+        <td>${legendaFormato(data[i])}</td>
+      </tr>`
+    );
+    linhas.push(`<tr class="legenda-total"><td>Total</td><td>${legendaFormato(total)}</td></tr>`);
+    tbody.innerHTML = linhas.join("");
   }
 
   function renderTrend(id, atual, anterior, { inverso = false } = {}) {
@@ -239,7 +253,8 @@
     renderDoughnut(
       "chart-pagamento",
       data.formas_pagamento.map((p) => p.chave),
-      data.formas_pagamento.map((p) => p.valor)
+      data.formas_pagamento.map((p) => p.valor),
+      { legendaId: "legenda-pagamento" }
     );
 
     renderBar(

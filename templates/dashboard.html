@@ -117,7 +117,12 @@
   </div>
   <div class="card">
     <p class="chart-title">Formas de pagamento</p>
-    <div class="chart-wrap"><canvas id="chart-pagamento"></canvas></div>
+    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+      <div class="chart-wrap" style="flex: 1 1 160px;"><canvas id="chart-pagamento"></canvas></div>
+      <table class="legenda-valores" id="legenda-pagamento" style="flex: 1 1 160px;">
+        <tbody></tbody>
+      </table>
+    </div>
   </div>
   <div class="card">
     <p class="chart-title">Ranking de vendedores</p>
