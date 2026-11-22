@@ -341,6 +341,7 @@ body.no-shell .content {
 
 .grid-charts {
   grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+  align-items: start;
 }
 
 .kpi-card {
