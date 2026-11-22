@@ -93,16 +93,23 @@ def excluir_batch(
 @router.get("/pendencias")
 def pendencias_page(
     request: Request,
+    loja: int | None = Query(default=None),
     service: ServiceImport = Depends(get_import_service),
     repository: RepositoryVendas = Depends(get_repository_vendas),
     current_user: dict[str, Any] = Depends(require_admin),
 ):
-    pendencias = repository.list_pendencias_nao_resolvidas()
+    pendencias = repository.list_pendencias_nao_resolvidas(loja=loja)
     comparacoes = [service.montar_comparacao(p) for p in pendencias]
+    lojas_disponiveis = repository.list_lojas_distintas()
     return templates.TemplateResponse(
         request,
         "pendencias.html",
-        {"comparacoes": comparacoes, "current_user": current_user},
+        {
+            "comparacoes": comparacoes,
+            "lojas_disponiveis": lojas_disponiveis,
+            "filtro_loja": loja,
+            "current_user": current_user,
+        },
     )
 
 

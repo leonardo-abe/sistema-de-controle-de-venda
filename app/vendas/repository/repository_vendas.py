@@ -83,12 +83,14 @@ class RepositoryVendas:
         self.session.add_all(pendencias)
         self.session.commit()
 
-    def list_pendencias_nao_resolvidas(self) -> list[PedidoPendente]:
+    def list_pendencias_nao_resolvidas(self, loja: int | None = None) -> list[PedidoPendente]:
         stmt = (
             select(PedidoPendente)
             .where(PedidoPendente.resolvido.is_(False))
             .order_by(PedidoPendente.criado_em.desc())
         )
+        if loja is not None:
+            stmt = stmt.where(PedidoPendente.loja == loja)
         return list(self.session.execute(stmt).scalars().all())
 
     def get_pendencia(self, pendencia_id: int) -> PedidoPendente | None:
