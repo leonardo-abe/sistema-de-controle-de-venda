@@ -181,6 +181,14 @@
     if (!resp.ok) return;
     const data = await resp.json();
 
+    const selectLoja = document.getElementById("filtro-loja");
+    data.lojas.forEach((loja) => {
+      const option = document.createElement("option");
+      option.value = loja;
+      option.textContent = `Loja ${loja}`;
+      selectLoja.appendChild(option);
+    });
+
     const selectVendedor = document.getElementById("filtro-vendedor");
     data.vendedores.forEach((nome) => {
       const option = document.createElement("option");

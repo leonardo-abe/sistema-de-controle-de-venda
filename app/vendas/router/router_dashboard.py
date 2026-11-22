@@ -36,6 +36,7 @@ def api_resumo(
     data_fim: date | None = Query(default=None),
     vendedor: str | None = Query(default=None),
     forma_pagamento: str | None = Query(default=None),
+    loja: int | None = Query(default=None),
     service: ServiceDashboard = Depends(get_dashboard_service),
 ):
     filtros = FiltrosDashboard(
@@ -43,11 +44,18 @@ def api_resumo(
         data_fim=data_fim,
         vendedor=vendedor or None,
         forma_pagamento=forma_pagamento or None,
+        loja=loja,
     )
 
     periodo_anterior = _periodo_anterior(data_inicio, data_fim)
     filtros_anterior = (
-        FiltrosDashboard(data_inicio=periodo_anterior[0], data_fim=periodo_anterior[1], vendedor=filtros.vendedor, forma_pagamento=filtros.forma_pagamento)
+        FiltrosDashboard(
+            data_inicio=periodo_anterior[0],
+            data_fim=periodo_anterior[1],
+            vendedor=filtros.vendedor,
+            forma_pagamento=filtros.forma_pagamento,
+            loja=filtros.loja,
+        )
         if periodo_anterior
         else None
     )

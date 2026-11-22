@@ -24,6 +24,7 @@ class FiltrosDashboard:
     data_fim: date | None = None
     vendedor: str | None = None
     forma_pagamento: str | None = None
+    loja: int | None = None
 
 
 class ServiceDashboard:
@@ -60,6 +61,8 @@ class ServiceDashboard:
             stmt = stmt.where(Pedido.vendedor == f.vendedor)
         if f.forma_pagamento:
             stmt = stmt.where(self._pedido_tem_pagamento(Pedido.loja, Pedido.pedido, f.forma_pagamento))
+        if f.loja is not None:
+            stmt = stmt.where(Pedido.loja == f.loja)
         return stmt
 
     def _aplicar_filtros_item[T](self, stmt: Select[T], f: FiltrosDashboard) -> Select[T]:
@@ -68,6 +71,8 @@ class ServiceDashboard:
             stmt = stmt.where(self._pedido_do_vendedor(ItemVenda.loja, ItemVenda.pedido, f.vendedor))
         if f.forma_pagamento:
             stmt = stmt.where(self._pedido_tem_pagamento(ItemVenda.loja, ItemVenda.pedido, f.forma_pagamento))
+        if f.loja is not None:
+            stmt = stmt.where(ItemVenda.loja == f.loja)
         return stmt
 
     def _aplicar_filtros_pagamento[T](self, stmt: Select[T], f: FiltrosDashboard) -> Select[T]:
@@ -76,9 +81,11 @@ class ServiceDashboard:
             stmt = stmt.where(self._pedido_do_vendedor(Pagamento.loja, Pagamento.pedido, f.vendedor))
         if f.forma_pagamento:
             stmt = stmt.where(Pagamento.tipo_pagamento == f.forma_pagamento)
+        if f.loja is not None:
+            stmt = stmt.where(Pagamento.loja == f.loja)
         return stmt
 
-    def opcoes_filtro(self) -> dict[str, list[str]]:
+    def opcoes_filtro(self) -> dict[str, list]:
         vendedor = func.coalesce(Pedido.vendedor, "NAO INFORMADO")
         vendedores = self.session.execute(select(vendedor).distinct().order_by(vendedor)).scalars().all()
         formas = (
@@ -86,7 +93,8 @@ class ServiceDashboard:
             .scalars()
             .all()
         )
-        return {"vendedores": list(vendedores), "formas_pagamento": list(formas)}
+        lojas = self.session.execute(select(Pedido.loja).distinct().order_by(Pedido.loja)).scalars().all()
+        return {"vendedores": list(vendedores), "formas_pagamento": list(formas), "lojas": list(lojas)}
 
     def kpis(self, f: FiltrosDashboard) -> KpiResumoSchema:
         stmt = select(
