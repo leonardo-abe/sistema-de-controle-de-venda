@@ -6,6 +6,8 @@
   Selecione os 3 arquivos exportados para a mesma data, seguindo o padrao de nome
   <code>vendas_DDMMAAAA.csv</code>, <code>vendas_DDMMAAAA_pagamentos.csv</code> e
   <code>vendas_DDMMAAAA_produtos.csv</code>. Os tres precisam ter a mesma data no nome.
+  Se cada filial exportar seus proprios arquivos, importe uma de cada vez - a importacao
+  so substitui os dados da(s) loja(s) presentes no arquivo, nao apaga outras filiais do mesmo dia.
 </p>
 
 {% if erro %}
@@ -13,9 +15,9 @@
 {% endif %}
 {% if resultado %}
 <div class="alert alert-success">
-  Importacao concluida para {{ resultado.data_referencia }}:
+  Importacao concluida para a(s) loja(s) {{ resultado.lojas }} em {{ resultado.data_referencia }}:
   {{ resultado.total_pedidos }} pedidos, {{ resultado.total_pagamentos }} pagamentos, {{ resultado.total_itens }} itens.
-  {% if resultado.substituiu_batch_anterior %}(dados anteriores desta data foram substituidos){% endif %}
+  {% if resultado.substituiu_batch_anterior %}(dados anteriores dessa(s) loja(s) nessa data foram substituidos){% endif %}
 </div>
 {% endif %}
 
@@ -41,6 +43,7 @@
     <thead>
       <tr>
         <th>Data referencia</th>
+        <th>Loja(s)</th>
         <th>Pedidos</th>
         <th>Pagamentos</th>
         <th>Itens</th>
@@ -52,18 +55,19 @@
       {% for batch in batches %}
       <tr>
         <td data-label="Data referencia">{{ batch.data_referencia }}</td>
+        <td data-label="Loja(s)">{{ batch.lojas }}</td>
         <td data-label="Pedidos">{{ batch.total_pedidos }}</td>
         <td data-label="Pagamentos">{{ batch.total_pagamentos }}</td>
         <td data-label="Itens">{{ batch.total_itens }}</td>
         <td data-label="Importado em">{{ batch.importado_em }}</td>
         <td data-label="Acoes">
-          <form method="post" action="/importar/{{ batch.id }}/excluir" onsubmit="return confirm('Excluir a importacao de {{ batch.data_referencia }}? Isso apaga os pedidos, pagamentos e itens desse lote, permitindo reimportar o dia.');">
+          <form method="post" action="/importar/{{ batch.id }}/excluir" onsubmit="return confirm('Excluir a importacao da(s) loja(s) {{ batch.lojas }} em {{ batch.data_referencia }}? Isso apaga os pedidos, pagamentos e itens desse lote, permitindo reimportar.');">
             <button type="submit" class="secondary">Excluir</button>
           </form>
         </td>
       </tr>
       {% else %}
-      <tr><td colspan="6" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>
+      <tr><td colspan="7" style="color: var(--text-muted);">Nenhuma importacao realizada ainda.</td></tr>
       {% endfor %}
     </tbody>
   </table>

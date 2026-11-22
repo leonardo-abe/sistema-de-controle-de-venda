@@ -52,17 +52,20 @@ class ServiceImport:
         datas_encontradas = Counter(parse_data(row["Data"]) for row in pedidos_rows if row.get("Data"))
         data_referencia = datas_encontradas.most_common(1)[0][0] if datas_encontradas else data_pedidos
 
+        # As lojas desse arquivo: a substituicao/conflito e escopado por
+        # loja+dia, nao pelo dia inteiro - importar a filial 2 nao pode
+        # apagar a filial 1 do mesmo dia.
+        lojas_no_arquivo = sorted({parse_int(row.get("Loja")) for row in pedidos_rows if row.get("Pedido")})
+
         self._validar_conflitos_de_pedido(pedidos_rows, data_referencia)
 
-        substituiu = False
-        batch_existente = self.repository.get_batch_by_data(data_referencia)
-        if batch_existente is not None:
-            self.repository.delete_batch_data(batch_existente.id)
-            substituiu = True
+        pedidos_removidos = self.repository.delete_dados_por_lojas_e_data(lojas_no_arquivo, data_referencia)
+        substituiu = pedidos_removidos > 0
 
         batch = self.repository.create_batch(
             ImportBatch(
                 data_referencia=data_referencia,
+                lojas=",".join(str(loja) for loja in lojas_no_arquivo),
                 arquivo_pedidos=arquivo_pedidos.filename or "",
                 arquivo_pagamentos=arquivo_pagamentos.filename or "",
                 arquivo_produtos=arquivo_produtos.filename or "",
@@ -85,6 +88,7 @@ class ServiceImport:
 
         return ImportResultSchema(
             data_referencia=data_referencia,
+            lojas=batch.lojas,
             total_pedidos=len(pedidos),
             total_pagamentos=len(pagamentos),
             total_itens=len(itens),
@@ -94,12 +98,12 @@ class ServiceImport:
 
     def _validar_conflitos_de_pedido(self, pedidos_rows: list[dict[str, str]], data_referencia_novo) -> None:
         # Um pedido e unico por (loja, pedido), independente de data. Se o
-        # arquivo traz um pedido que ja existe no banco, arquivado num lote de
-        # uma data diferente da que esta sendo importada agora (ex.: uma
-        # exportacao anterior incluiu, por engano, um pedido do dia errado),
-        # a importacao inteira e rejeitada antes de gravar qualquer coisa,
-        # com uma mensagem dizendo qual pedido e quais as duas datas em
-        # conflito.
+        # arquivo traz um pedido que ja existe no banco numa data diferente
+        # da que esta sendo importada agora (ex.: uma exportacao anterior
+        # incluiu, por engano, um pedido do dia errado), a importacao inteira
+        # e rejeitada antes de gravar qualquer coisa, com uma mensagem
+        # dizendo qual pedido e quais as duas datas em conflito. Pedidos da
+        # mesma loja e mesma data sao normais (serao substituidos).
         conflitos = []
         vistos: set[tuple[int, int]] = set()
         for row in pedidos_rows:
@@ -112,14 +116,9 @@ class ServiceImport:
             vistos.add((loja, pedido))
 
             existente = self.repository.get_pedido_por_chave(loja, pedido)
-            if existente is None:
-                continue
-
-            lote_anterior = self.repository.get_batch_by_id(existente.import_batch_id)
-            data_anterior = lote_anterior.data_referencia if lote_anterior else existente.data
-            if data_anterior != data_referencia_novo:
+            if existente is not None and existente.data != data_referencia_novo:
                 conflitos.append(
-                    f"pedido {pedido} (loja {loja}): ja importado no lote do dia {data_anterior}, este arquivo e do dia {data_referencia_novo}"
+                    f"pedido {pedido} (loja {loja}): ja registrado em {existente.data}, este arquivo e do dia {data_referencia_novo}"
                 )
 
         if conflitos:

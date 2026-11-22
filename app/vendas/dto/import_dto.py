@@ -5,6 +5,7 @@ from pydantic import BaseModel
 
 class ImportResultSchema(BaseModel):
     data_referencia: date
+    lojas: str
     total_pedidos: int
     total_pagamentos: int
     total_itens: int

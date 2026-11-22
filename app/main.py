@@ -14,6 +14,7 @@ from starlette.status import HTTP_401_UNAUTHORIZED
 from app.auth import router_auth, router_users
 from app.auth.enum.role_permissions import RolePermissions
 from app.auth.models import User
+from app.infra.db.migrations import migrar_import_batches_multi_loja
 from app.infra.db.sqlite import Base, SessionLocal, engine
 from app.shared.security.security import hash_password
 from app.shared.settings import settings
@@ -39,6 +40,7 @@ def seed_admin_user() -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    migrar_import_batches_multi_loja(engine)
     Base.metadata.create_all(bind=engine)
     seed_admin_user()
     yield

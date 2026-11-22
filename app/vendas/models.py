@@ -11,7 +11,8 @@ class ImportBatch(Base):
     __tablename__ = "import_batches"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    data_referencia: Mapped[date_type] = mapped_column(Date, unique=True, index=True)
+    data_referencia: Mapped[date_type] = mapped_column(Date, index=True)
+    lojas: Mapped[str] = mapped_column(String(100), default="")
     arquivo_pedidos: Mapped[str] = mapped_column(String(255))
     arquivo_pagamentos: Mapped[str] = mapped_column(String(255))
     arquivo_produtos: Mapped[str] = mapped_column(String(255))
