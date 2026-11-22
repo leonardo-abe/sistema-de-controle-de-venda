@@ -110,7 +110,51 @@
   </div>
 </div>
 
-<div class="card" style="margin-bottom: 24px; max-width: 720px;">
+<div class="grid grid-charts">
+  <div class="card">
+    <p class="chart-title">Vendas por dia</p>
+    <div class="chart-wrap"><canvas id="chart-vendas-dia"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Formas de pagamento</p>
+    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
+      <div class="chart-wrap" style="flex: 1 1 160px;"><canvas id="chart-pagamento"></canvas></div>
+      <table class="legenda-valores" id="legenda-pagamento" style="flex: 1 1 160px;">
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Ranking de vendedores</p>
+    <div class="chart-wrap"><canvas id="chart-vendedor"></canvas></div>
+  </div>
+  <div class="card hidden" id="card-ranking-loja">
+    <p class="chart-title">Ranking de lojas</p>
+    <div class="chart-wrap"><canvas id="chart-loja"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Top produtos (R$)</p>
+    <div class="chart-wrap"><canvas id="chart-produtos"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Vendas por grupo</p>
+    <div class="chart-wrap"><canvas id="chart-grupos"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Margem bruta por grupo</p>
+    <div class="chart-wrap"><canvas id="chart-margem"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Pedidos por cidade</p>
+    <div class="chart-wrap"><canvas id="chart-cidade"></canvas></div>
+  </div>
+  <div class="card">
+    <p class="chart-title">Cliente identificado</p>
+    <div class="chart-wrap"><canvas id="chart-cliente"></canvas></div>
+  </div>
+</div>
+
+<div class="card" style="margin-top: 32px; margin-bottom: 24px; max-width: 720px;">
   <p class="chart-title">Resumo da importacao</p>
   <table class="resumo-importacao">
     <thead>
@@ -183,51 +227,7 @@
   </div>
 </div>
 
-<div class="grid grid-charts">
-  <div class="card">
-    <p class="chart-title">Vendas por dia</p>
-    <div class="chart-wrap"><canvas id="chart-vendas-dia"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Formas de pagamento</p>
-    <div style="display:flex; gap:16px; align-items:center; flex-wrap:wrap;">
-      <div class="chart-wrap" style="flex: 1 1 160px;"><canvas id="chart-pagamento"></canvas></div>
-      <table class="legenda-valores" id="legenda-pagamento" style="flex: 1 1 160px;">
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Ranking de vendedores</p>
-    <div class="chart-wrap"><canvas id="chart-vendedor"></canvas></div>
-  </div>
-  <div class="card hidden" id="card-ranking-loja">
-    <p class="chart-title">Ranking de lojas</p>
-    <div class="chart-wrap"><canvas id="chart-loja"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Top produtos (R$)</p>
-    <div class="chart-wrap"><canvas id="chart-produtos"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Vendas por grupo</p>
-    <div class="chart-wrap"><canvas id="chart-grupos"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Margem bruta por grupo</p>
-    <div class="chart-wrap"><canvas id="chart-margem"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Pedidos por cidade</p>
-    <div class="chart-wrap"><canvas id="chart-cidade"></canvas></div>
-  </div>
-  <div class="card">
-    <p class="chart-title">Cliente identificado</p>
-    <div class="chart-wrap"><canvas id="chart-cliente"></canvas></div>
-  </div>
-</div>
-
-<h3 style="color: var(--brand-navy); margin-top: 32px;">Auditoria de descontos</h3>
+<h3 style="color: var(--brand-navy);">Auditoria de descontos</h3>
 <p style="color: var(--text-secondary); max-width: 640px; margin-top: -8px;">
   Pedidos marcados como "Recuperado" (reabertos/editados pelo vendedor) ou com desconto igual ou acima de 50%,
   mesmo sem a marcacao. Use para investigar cupons zerados ou descontos fora do padrao.
