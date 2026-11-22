@@ -233,6 +233,26 @@ class ServiceImport:
     def _chave(row: dict[str, str]) -> tuple[int, int]:
         return (parse_int(row.get("Loja")), parse_int(row.get("Pedido")))
 
+    @staticmethod
+    def _pedido_identico(existente: Pedido, row: dict[str, str]) -> bool:
+        # Compara pedido/data/hora/vendedor/valor (os campos que o cliente
+        # pediu) entre o que ja esta salvo e a linha que acabou de chegar,
+        # para distinguir uma reexportacao da mesma venda (nada mudou) de
+        # uma divergencia real que precisa de revisao manual.
+        try:
+            data_nova = parse_data(row["Data"]) if row.get("Data") else None
+            hora_nova = parse_hora(row["Hora"]) if row.get("Hora") else None
+        except ValueError:
+            return False
+        vendedor_novo = clean_str(row.get("Vendedor"))
+        total_novo = parse_decimal(row.get("Total"))
+        return (
+            existente.data == data_nova
+            and existente.hora == hora_nova
+            and existente.vendedor == vendedor_novo
+            and abs(existente.total - total_novo) < 0.01
+        )
+
     def _detectar_pendencias(
         self,
         pedidos_rows: list[dict[str, str]],
@@ -244,10 +264,13 @@ class ServiceImport:
         # arquivo traz um pedido que ja existe no banco numa data diferente
         # da que esta sendo importada agora (ex.: uma exportacao anterior
         # incluiu, por engano, um pedido do dia errado - ou o cliente mesmo
-        # confirma que isso acontece com alguma frequencia), ele NAO e
-        # inserido nem substituido automaticamente: fica pendente de revisao
-        # manual numa tela propria, com as duas versoes lado a lado. O resto
-        # do arquivo e importado normalmente.
+        # confirma que isso acontece com alguma frequencia), so vira
+        # pendencia de revisao manual se o CONTEUDO tambem for diferente
+        # (data, hora, vendedor, valor). Se for a mesma venda reexportada
+        # sob um rotulo de dia diferente (conteudo identico), nao ha nada
+        # para revisar: fica como ja estava, sem pendencia. O resto do
+        # arquivo (e as reimportacoes normais do mesmo dia) seguem
+        # substituindo direto, sem essa checagem extra.
         chaves: set[tuple[int, int]] = set()
         pendencias: list[PedidoPendente] = []
         vistos: set[tuple[int, int]] = set()
@@ -262,6 +285,13 @@ class ServiceImport:
 
             existente = self.repository.get_pedido_por_chave(loja, pedido)
             if existente is None or existente.data == data_referencia_novo:
+                continue
+
+            if self._pedido_identico(existente, row):
+                # mesma venda reexportada sob outra data de lote - nada a
+                # fazer, mas exclui do insert normal para nao duplicar nem
+                # mexer no que ja esta correto.
+                chaves.add(chave)
                 continue
 
             chaves.add(chave)
