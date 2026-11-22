@@ -1,6 +1,7 @@
+from datetime import date
 from typing import Any
 
-from fastapi import APIRouter, Depends, File, Form, Request, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, Request, UploadFile, status
 from fastapi.responses import RedirectResponse
 
 from app.shared.security.security import get_current_user, require_admin
@@ -15,16 +16,24 @@ router = APIRouter(prefix="/importar", tags=["importacao"], dependencies=[Depend
 @router.get("")
 def import_page(
     request: Request,
+    data_inicio: date | None = Query(default=None),
+    data_fim: date | None = Query(default=None),
+    loja: int | None = Query(default=None),
     repository: RepositoryVendas = Depends(get_repository_vendas),
     current_user: dict[str, Any] = Depends(get_current_user),
 ):
-    batches = repository.list_batches()
+    batches = repository.list_batches(data_inicio=data_inicio, data_fim=data_fim, loja=loja)
+    lojas_disponiveis = repository.list_lojas_distintas()
     total_pendencias = len(repository.list_pendencias_nao_resolvidas())
     return templates.TemplateResponse(
         request,
         "importar.html",
         {
             "batches": batches,
+            "lojas_disponiveis": lojas_disponiveis,
+            "filtro_data_inicio": data_inicio,
+            "filtro_data_fim": data_fim,
+            "filtro_loja": loja,
             "resultado": None,
             "erro": None,
             "current_user": current_user,
@@ -51,6 +60,7 @@ def import_submit(
         erro = getattr(exc, "detail", str(exc))
 
     batches = repository.list_batches()
+    lojas_disponiveis = repository.list_lojas_distintas()
     total_pendencias = len(repository.list_pendencias_nao_resolvidas())
     status_code = 400 if erro else 200
     return templates.TemplateResponse(
@@ -58,6 +68,10 @@ def import_submit(
         "importar.html",
         {
             "batches": batches,
+            "lojas_disponiveis": lojas_disponiveis,
+            "filtro_data_inicio": None,
+            "filtro_data_fim": None,
+            "filtro_loja": None,
             "resultado": resultado,
             "erro": erro,
             "current_user": current_user,

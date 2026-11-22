@@ -49,6 +49,27 @@
 </form>
 
 <h3 style="color: var(--brand-navy);">Historico de importacoes</h3>
+<form method="get" action="/importar" class="card" style="margin-bottom: 16px; display: flex; gap: 12px; align-items: end; flex-wrap: wrap;">
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Data inicio</span>
+    <input type="date" name="data_inicio" value="{{ filtro_data_inicio or '' }}" />
+  </label>
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Data fim</span>
+    <input type="date" name="data_fim" value="{{ filtro_data_fim or '' }}" />
+  </label>
+  <label style="display:flex; flex-direction:column; gap:4px;">
+    <span style="font-size: 12px; color: var(--text-muted);">Loja</span>
+    <select name="loja">
+      <option value="">Todas</option>
+      {% for loja in lojas_disponiveis %}
+      <option value="{{ loja }}" {{ 'selected' if filtro_loja == loja else '' }}>Loja {{ loja }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button type="submit">Aplicar filtro</button>
+  <a href="/importar" class="btn secondary">Limpar</a>
+</form>
 <div class="card table-scroll">
   <table>
     <thead>

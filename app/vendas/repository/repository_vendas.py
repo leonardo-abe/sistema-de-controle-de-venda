@@ -158,6 +158,22 @@ class RepositoryVendas:
             self.session.execute(stmt)
         self.session.commit()
 
-    def list_batches(self) -> list[ImportBatch]:
+    def list_batches(
+        self,
+        data_inicio: date | None = None,
+        data_fim: date | None = None,
+        loja: int | None = None,
+    ) -> list[ImportBatch]:
         stmt = select(ImportBatch).order_by(ImportBatch.data_referencia.desc(), ImportBatch.importado_em.desc())
+        if data_inicio is not None:
+            stmt = stmt.where(ImportBatch.data_referencia >= data_inicio)
+        if data_fim is not None:
+            stmt = stmt.where(ImportBatch.data_referencia <= data_fim)
+        batches = list(self.session.execute(stmt).scalars().all())
+        if loja is not None:
+            batches = [b for b in batches if str(loja) in b.lojas.split(",")]
+        return batches
+
+    def list_lojas_distintas(self) -> list[int]:
+        stmt = select(Pedido.loja).distinct().order_by(Pedido.loja)
         return list(self.session.execute(stmt).scalars().all())
