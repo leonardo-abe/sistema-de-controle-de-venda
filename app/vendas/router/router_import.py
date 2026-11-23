@@ -18,10 +18,14 @@ def import_page(
     request: Request,
     data_inicio: date | None = Query(default=None),
     data_fim: date | None = Query(default=None),
-    loja: int | None = Query(default=None),
+    loja: str | None = Query(default=None),
     repository: RepositoryVendas = Depends(get_repository_vendas),
     current_user: dict[str, Any] = Depends(get_current_user),
 ):
+    # O select de loja manda "" quando "Todas" esta selecionado - Query(int)
+    # rejeitaria essa string vazia direto, por isso o parametro chega como
+    # str e e convertido aqui.
+    loja = int(loja) if loja else None
     batches = repository.list_batches(data_inicio=data_inicio, data_fim=data_fim, loja=loja)
     lojas_disponiveis = repository.list_lojas_distintas()
     total_pendencias = len(repository.list_pendencias_nao_resolvidas())
@@ -93,11 +97,12 @@ def excluir_batch(
 @router.get("/pendencias")
 def pendencias_page(
     request: Request,
-    loja: int | None = Query(default=None),
+    loja: str | None = Query(default=None),
     service: ServiceImport = Depends(get_import_service),
     repository: RepositoryVendas = Depends(get_repository_vendas),
     current_user: dict[str, Any] = Depends(require_admin),
 ):
+    loja = int(loja) if loja else None
     pendencias = repository.list_pendencias_nao_resolvidas(loja=loja)
     comparacoes = [service.montar_comparacao(p) for p in pendencias]
     lojas_disponiveis = repository.list_lojas_distintas()
